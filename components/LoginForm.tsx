@@ -1,9 +1,13 @@
 import React from "react";
-import { loginPost } from "lib/auth";
 import { Alert } from "./Alert";
-import { FaSignInAlt, FaSpinner } from "react-icons/fa";
+import { FaSignInAlt } from "react-icons/fa";
+import { AuthState } from "types";
+import Router from "next/router";
 
-class LoginForm extends React.Component {
+class LoginForm extends React.Component<{
+  auth: AuthState;
+  loginAuth: any;
+}> {
   state = {
     loading: false,
     username: "",
@@ -24,11 +28,14 @@ class LoginForm extends React.Component {
     this.setState({ loading: true });
     const { username, password } = this.state;
     try {
-      const res = await loginPost(username, password);
-      console.log(res);
-      this.setState({ response: { show: true, ...res } });
+      await this.props.loginAuth(username, password);
+
+      this.setState({ response: { show: true, ...this.props.auth } });
+
+      setTimeout(() => {
+        Router.replace("/admin");
+      }, 2000);
     } catch (res: any) {
-      console.log(res);
       this.setState({ response: { show: true, ...res } });
       this.setState({ loading: false });
     }
@@ -36,53 +43,77 @@ class LoginForm extends React.Component {
 
   render() {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 ">
-        <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg w-96">
-          {this.state.response.show && (
-            <Alert
-              error={this.state.response.error}
-              message={this.state.response.message}
-            />
-          )}
-          <h3 className="text-2xl font-bold text-center">Login</h3>
-          <form onSubmit={this.submitForm}>
-            <div className="mt-4">
-              <label className="block">Username</label>
-              <input
-                name="username"
-                type="text"
-                placeholder="Username"
-                className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-900"
-                required
-                onChange={this.handleChange}
-              ></input>
+      <section className="h-screen">
+        <div className="px-6 h-full text-gray-800">
+          <div className="flex xl:justify-center lg:justify-between justify-center items-center flex-wrap h-full g-6">
+            <div className="grow-0 shrink-1 md:shrink-0 basis-auto xl:w-6/12 lg:w-6/12 md:w-9/12 mb-12 md:mb-0">
+              <img
+                src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
+                className="w-full"
+                alt="Sample image"
+              />
             </div>
-            <div className="mt-4">
-              <label className="block">Password</label>
-              <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-900"
-                required
-                onChange={this.handleChange}
-              ></input>
-            </div>
-            <div className="flex justify-between">
-              <button className="inline-flex items-center px-6 py-2 mt-4  text-white transition-colors duration-150 bg-primary-900 rounded-lg hover:bg-primary-500">
-                <div
-                  className={`self-center inline flex-shrink-0 mr-3 ${
-                    this.state.loading && "animate-spin"
-                  }`}
-                >
-                  {this.state.loading ? <FaSpinner /> : <FaSignInAlt />}
+            <div className="xl:ml-20 xl:w-5/12 lg:w-5/12 md:w-8/12 mb-12 md:mb-0">
+              {this.state.response.show && (
+                <Alert
+                  error={this.state.response.error}
+                  message={this.state.response.message}
+                />
+              )}
+
+              <form onSubmit={this.submitForm}>
+                <div className="flex flex-row items-center justify-center lg:justify-start">
+                  <p className="text-lg mb-0 mr-4">
+                    Aplikasi Whatsapp Bot TV Kabel
+                  </p>
                 </div>
-                <span>Login</span>
-              </button>
+
+                <div className="flex items-center my-4 before:flex-1 before:border-t before:border-primary-300 before:mt-0.5 after:flex-1 after:border-t after:border-primary-300 after:mt-0.5"></div>
+
+                <div className="mb-6">
+                  <input
+                    type="text"
+                    className="form-control block w-full px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-primary-300 rounded transition ease-in-out m-0 focus:text-gray-500 focus:bg-white focus:border-primary-600 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Username"
+                    name="username"
+                    onChange={this.handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <input
+                    type="password"
+                    className="form-control input input-bordered  block w-full px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-500 focus:bg-white focus:border-primary-600 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Password"
+                    name="password"
+                    onChange={this.handleChange}
+                    required
+                  />
+                </div>
+                <div className="flex justify-between">
+                  {this.state.loading ? (
+                    <button className="btn btn-outline btn-primary loading">
+                      loading
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={this.state.loading}
+                      className="btn btn-outline btn-primary gap-2"
+                    >
+                      <div className="self-center inline flex-shrink-0 mr-3">
+                        <FaSignInAlt />
+                      </div>
+                      <span>Login</span>
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      </section>
     );
   }
 }

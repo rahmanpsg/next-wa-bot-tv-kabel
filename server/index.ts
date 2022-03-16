@@ -8,7 +8,7 @@ const dev = process.env.NODE_ENV !== 'production'
 const port = parseInt(process.env.PORT || '3000', 10)
 const hostname = "localhost";
 
-const appNext = next({ dev })
+const appNext = next({ dev, hostname, port })
 const handle = appNext.getRequestHandler()
 
 appNext.prepare().then(() => {

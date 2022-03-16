@@ -1,5 +1,3 @@
-const colors = require("tailwindcss/colors");
-
 module.exports = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx}",
@@ -7,61 +5,32 @@ module.exports = {
   ],
 
   theme: {
-    colors: {
-      transparent: "transparent",
-      current: "currentColor",
-      primary: {
-        50: "#f1fdda",
-        100: "#e7f3d0",
-        200: "#dde9c6",
-        300: "#d3dfbc",
-        400: "#c9d5b2",
-        500: "#bfcba8",
-        600: "#b5c19e",
-        700: "#abb794",
-        800: "#a1ad8a",
-        900: "#97a380",
-      },
-      secondary: {
-        50: "#8dbca4",
-        100: "#83b29a",
-        200: "#79a890",
-        300: "#6f9e86",
-        400: "#65947c",
-        500: "#5b8a72",
-        600: "#518068",
-        700: "#47765e",
-        800: "#3d6c54",
-        900: "#33624a",
-      },
-      warning: {
-        50: "#88a99e",
-        100: "#7e9f94",
-        200: "#74958a",
-        300: "#6a8b80",
-        400: "#608176",
-        500: "#56776c",
-        600: "#4c6d62",
-        700: "#426358",
-        800: "#38594e",
-        900: "#2e4f44",
-      },
-      danger: {
-        50: "#955858",
-        100: "#8b4e4e",
-        200: "#814444",
-        300: "#773a3a",
-        400: "#6d3030",
-        500: "#632626",
-        600: "#591c1c",
-        700: "#4f1212",
-        800: "#450808",
-        900: "#3b0000",
-      },
-      white: "#fff",
-      gray: colors.gray,
-    },
     extend: {},
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        mytheme: {
+          primary: "#96CEB4",
+
+          secondary: "#FFEEAD",
+
+          accent: "#3cb4bc",
+
+          neutral: "#1E202F",
+
+          "base-100": "#fff",
+
+          info: "#30B7D9",
+
+          success: "#1A7F4E",
+
+          warning: "#FFAD60",
+
+          error: "#D9534F",
+        },
+      },
+    ],
+  },
 };

@@ -10,6 +10,9 @@ import { HYDRATE, createWrapper } from "next-redux-wrapper";
 import thunkMiddleware from "redux-thunk";
 
 import auth from "./auth/reduces";
+import wa from "./wa/reduces";
+import user from "./wa/reduces";
+
 import { State } from "types";
 
 const bindMiddleware = (middleware: any) => {
@@ -22,6 +25,8 @@ const bindMiddleware = (middleware: any) => {
 
 const combineReducer = combineReducers({
   auth,
+  wa,
+  user,
 });
 
 const reducer: Reducer<State, AnyAction> = (state, action) => {

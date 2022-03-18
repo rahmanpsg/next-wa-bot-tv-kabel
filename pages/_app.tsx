@@ -1,13 +1,13 @@
 import "../styles/globals.css";
 
+import Axios from "axios";
 import { ReactElement, ReactNode } from "react";
 import type { AppProps } from "next/app";
 import { wrapper } from "../store/store";
 import { NextPage } from "next";
 
-// function MyApp({ Component, pageProps }: AppProps) {
-//   return <Component {...pageProps} />;
-// }
+Axios.defaults.baseURL = process.env.NEXT_PUBLIC_BACKEND_URL + "/api";
+Axios.defaults.withCredentials = true;
 
 type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;

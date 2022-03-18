@@ -61,7 +61,7 @@ class Drawer extends React.Component<MyComponentProps> {
     return (
       <div className="drawer-side">
         <label htmlFor="my-drawer" className="drawer-overlay"></label>
-        <ul className="menu bg-primary w-57">
+        <ul className="menu p-4 overflow-y-auto lg:w-72 w-80 bg-primary text-base-content">
           {listMenu.map((menu: MenuType, index) => (
             <li key={index}>
               <Link href={menu.path}>

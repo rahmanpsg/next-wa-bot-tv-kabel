@@ -1,15 +1,33 @@
-require("./config/database").connect();
-
-import express from 'express';
+import express from "express";
+import socketio from "socket.io";
 import cookieParser from "cookie-parser";
 
-const app = express()
+import authRoutes from "./routes/auth";
+import waRoutes from "./routes/wa";
+import userRoutes from "./routes/user";
 
-app.use(cookieParser())
+const io: socketio.Server = new socketio.Server();
+
+io.on("connection", (socket: socketio.Socket) => {
+  console.log("socketio : client connection");
+
+  socket.on("disconnect", () => {
+    console.log("socketio : client disconnected");
+  });
+});
+
+const app = express();
+
+app.use(cookieParser());
 app.use(express.json());
 
-const authRoute = require("./routes/auth");
+app.use((req: any, _, next) => {
+  req.io = io;
+  next();
+});
 
-app.use("/api/auth", authRoute);
+app.use("/api/auth", authRoutes);
+app.use("/api/wa", waRoutes);
+app.use("/api/user", userRoutes);
 
-module.exports = app
+module.exports = { app, io };

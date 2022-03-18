@@ -1,12 +1,17 @@
 import axios from "axios";
-const END_POINT = "api/auth/";
-
 class AuthService {
+  public END_POINT: string;
+
+  constructor() {
+    this.END_POINT = "auth/";
+  }
+
   async login(username: string, password: string) {
     try {
-      const res = await axios.post(END_POINT + "login", { username, password });
-
-      this.setToken(res.data.user.token);
+      const res = await axios.post(this.END_POINT + "login", {
+        username,
+        password,
+      });
 
       return res.data;
     } catch (error: any) {
@@ -16,7 +21,7 @@ class AuthService {
 
   async logout() {
     try {
-      const res = await axios.get(END_POINT + "logout");
+      const res = await axios.get(this.END_POINT + "logout");
       delete axios.defaults.headers.common["Authorization"];
 
       return res.data;
@@ -25,14 +30,9 @@ class AuthService {
     }
   }
 
-  setToken(token: string) {
-    localStorage.setItem("token", `Bearer ${token}`);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  }
-
   async verify() {
     try {
-      const res = await axios.get(END_POINT);
+      const res = await axios.get(this.END_POINT);
 
       return res.data;
     } catch (error: any) {

@@ -1,30 +1,43 @@
-import next from 'next';
-import http from 'http';
-import { IncomingMessage, ServerResponse } from 'http';
+import next, { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
+import http from "http";
+import { init } from "./whatsapp";
 
 require("dotenv").config();
 
-const dev = process.env.NODE_ENV !== 'production'
-const port = parseInt(process.env.PORT || '3000', 10)
-const hostname = "localhost";
+const dev: boolean = process.env.NODE_ENV !== "production";
+const port: number = parseInt(process.env.PORT || "3000", 10);
+const hostname: string = "localhost";
 
-const appNext = next({ dev, hostname, port })
-const handle = appNext.getRequestHandler()
+const appNext = next({ dev, hostname, port });
+const handle: NextApiHandler = appNext.getRequestHandler();
 
-appNext.prepare().then(() => {
-  const app = require("./app");
-  const server = http.createServer(app);
+const database = require("./config/database");
 
-  // Fallback handler
-  app.get("*", (req: IncomingMessage, res: ServerResponse) => {
-    return handle(req, res);
+appNext
+  .prepare()
+  .then(() => {
+    const app = require("./app").app;
+    const io = require("./app").io;
+    const server = http.createServer(app);
+
+    io.attach(server);
+
+    // init Whatsapp Bot
+    init();
+
+    // Fallback handler
+    app.get("*", (req: NextApiRequest, res: NextApiResponse) => {
+      return handle(req, res);
+    });
+
+    // Connect to mongodb
+    database.connect();
+
+    // Listen on the default port (3000)
+    server.listen(port, hostname);
+    console.log(`Server berjalan di http://${hostname}:${port}`);
+  })
+  .catch((error: any) => {
+    console.error(error.stack);
+    process.exit(1);
   });
-
-  // Listen on the default port (3000)
-  server.listen(port, hostname);
-  console.log(`Server jalan di http://${hostname}:${port}`);
-
-}).catch((error: any) => {
-  console.error(error.stack);
-  process.exit(1);
-});

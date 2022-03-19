@@ -1,13 +1,15 @@
-import React from "react";
+import React, { ChangeEvent, FormEvent } from "react";
 import { Alert } from "./Alert";
 import { FaSignInAlt } from "react-icons/fa";
 import { AuthState } from "types";
 import Router from "next/router";
 
-class LoginForm extends React.Component<{
-  auth: AuthState;
-  loginAuth: any;
-}> {
+type LoginFormProps = {
+  authState: AuthState;
+  loginAuth: (username: string, password: string) => void;
+};
+
+class LoginForm extends React.Component<LoginFormProps> {
   state = {
     loading: false,
     username: "",
@@ -19,18 +21,18 @@ class LoginForm extends React.Component<{
     },
   };
 
-  handleChange = (e: { target: HTMLInputElement }) => {
+  handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({ [e.target.name]: e.target.value });
   };
 
-  submitForm = async (e: any) => {
+  submitForm = async (e: FormEvent) => {
     e.preventDefault();
     this.setState({ loading: true });
     const { username, password } = this.state;
     try {
       await this.props.loginAuth(username, password);
 
-      this.setState({ response: { show: true, ...this.props.auth } });
+      this.setState({ response: { show: true, ...this.props.authState } });
 
       setTimeout(() => {
         Router.replace("/admin");

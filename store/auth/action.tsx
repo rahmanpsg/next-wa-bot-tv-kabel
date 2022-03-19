@@ -13,7 +13,10 @@ export const loginAuth =
   };
 
 export const logoutAuth = () => async (dispatch: any) => {
-  const res = await AuthService.logout();
-
-  dispatch({ type: authActionTypes.LOGOUT, payload: res });
+  try {
+    const res = await AuthService.logout();
+    dispatch({ type: authActionTypes.LOGOUT, payload: res });
+  } catch (error) {
+    dispatch({ type: authActionTypes.LOGOUT, payload: error });
+  }
 };

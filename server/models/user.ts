@@ -5,20 +5,34 @@ export interface IUser extends Document {
   username: string;
   password: string;
   nama: string;
-  telpon: number;
+  telpon: string;
   alamat: string;
   role: string;
 }
 
 const schema: Schema = new Schema<IUser>(
   {
-    nik: Number,
+    nik: {
+      type: Number,
+      unique: true,
+      minlength: 16,
+      maxlength: 16,
+      required: true,
+    },
     username: String,
     password: String,
     nama: String,
-    telpon: Number,
+    telpon: {
+      type: String,
+      unique: true,
+      required: true,
+    },
     alamat: String,
-    role: String,
+    role: {
+      type: String,
+      default: "pelanggan",
+      required: true,
+    },
   },
   { timestamps: true }
 );

@@ -10,17 +10,23 @@ export type WaState = {
 };
 
 export type Users = {
+  _id: string;
   nik: number;
   nama: string;
   telpon: number;
+  alamat: string;
+  createdAt: string;
 };
 
 export type UserState = {
   users: Array<Users>;
+  message: string | null;
+  error: boolean;
+  errors: Map<string, string> | null;
 };
 
 export interface State {
-  auth: AuthState;
-  wa: WaState;
-  user: UserState;
+  authState: AuthState;
+  waState: WaState;
+  userState: UserState;
 }

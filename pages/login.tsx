@@ -1,13 +1,24 @@
 import { connect } from "react-redux";
 import { loginAuth } from "../store/auth/action";
 import LoginForm from "../components/LoginForm";
+import { AuthState, State } from "../types";
 
-const Login = (props: any) => {
-  return <LoginForm auth={props.auth} loginAuth={props.loginAuth}></LoginForm>;
+type LoginProps = {
+  authState: AuthState;
+  loginAuth: (username: string, password: string) => void;
 };
 
-const mapStateToProps = (state: any) => ({
-  auth: state.auth,
+const Login = (props: LoginProps) => {
+  return (
+    <LoginForm
+      authState={props.authState}
+      loginAuth={props.loginAuth}
+    ></LoginForm>
+  );
+};
+
+const mapStateToProps = (state: State) => ({
+  authState: state.authState,
 });
 
 const mapActionsToProps = {

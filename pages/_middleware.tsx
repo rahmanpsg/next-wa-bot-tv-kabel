@@ -6,7 +6,8 @@ export function middleware(req: NextRequest) {
   const { jwt } = req.cookies;
   const url = req.nextUrl.clone();
 
-  return redirectIfAuthenticated(jwt, url);
+  if (process.env.NODE_ENV == "production")
+    return redirectIfAuthenticated(jwt, url);
 }
 
 const redirectIfAuthenticated = (jwt: string, url: NextURL) => {
@@ -17,8 +18,6 @@ const redirectIfAuthenticated = (jwt: string, url: NextURL) => {
 
     url.pathname = "/admin";
 
-    // if (pathname == "/") return NextResponse.redirect(url);
-    // else
     if (pathname != "/" && !pathname.includes("/admin").valueOf())
       return NextResponse.redirect(url);
   } catch (error) {

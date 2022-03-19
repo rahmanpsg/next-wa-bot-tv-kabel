@@ -3,15 +3,18 @@ import { TiWarning, TiTick } from "react-icons/ti";
 type AlertProps = {
   error: boolean;
   message: string;
+  className?: string;
 };
 
-export const Alert = ({ error, message }: AlertProps) => (
+export const Alert = (props: AlertProps) => (
   <div
-    className={`alert text-white ${error ? "alert-warning" : "alert-success"}`}
+    className={`alert text-white ${
+      props.error ? "alert-warning" : "alert-success"
+    } ${props.className}`}
   >
     <div>
-      {error ? <TiWarning size={20} /> : <TiTick size={24} />}
-      <span>{message}</span>
+      {props.error ? <TiWarning size={20} /> : <TiTick size={24} />}
+      <span>{props.message}</span>
     </div>
   </div>
 );

@@ -7,10 +7,10 @@ export const Header = () => {
   const logout = async () => {
     try {
       await AuthService.logout();
-      Router.replace("/");
     } catch (error) {
       console.log(error);
     }
+    Router.replace("/");
   };
 
   return (

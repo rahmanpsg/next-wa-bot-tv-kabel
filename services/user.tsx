@@ -16,6 +16,32 @@ class UserService {
       throw error.response.data;
     }
   }
+
+  async post(formData: FormData) {
+    try {
+      let data: any = {};
+      formData.forEach((value, key) => (data[key] = value));
+
+      const res = await axios.post(this.END_POINT, data);
+
+      return res.data;
+    } catch (error: any) {
+      throw error.response.data;
+    }
+  }
+
+  async put(formData: FormData, id: string) {
+    try {
+      let data: any = { id };
+      formData.forEach((value, key) => (data[key] = value));
+
+      const res = await axios.put(this.END_POINT, data);
+
+      return res.data;
+    } catch (error: any) {
+      throw error.response.data;
+    }
+  }
 }
 
 export default new UserService();

@@ -15,9 +15,17 @@ import { waActionTypes } from "../../store/wa/action";
 
 import io from "socket.io-client";
 import QRCode from "react-qr-code";
-import { State } from "types";
+import { State, WaState } from "types";
 
-const Home = (props: any) => {
+type HomeProps = {
+  waState: WaState;
+  runWaBot: () => void;
+  stopWaBot: () => void;
+  getStatus: () => void;
+  runningWaBot: () => void;
+};
+
+const Home = (props: HomeProps) => {
   useEffect(() => {
     const socket = io(process.env.baseURL!);
 
@@ -102,15 +110,19 @@ const Home = (props: any) => {
           <RiWhatsappFill className="text-success" size={40} />
           <div>
             <h3 className="font-bold">Informasi</h3>
-            <div className="text-xs">{props.wa.message}</div>
+            <div className="text-xs">{props.waState.message}</div>
           </div>
         </div>
         <div className="flex-none">
-          {props.wa.loading ? btnLoading : props.wa.run ? btnStop : btnRun}
+          {props.waState.loading
+            ? btnLoading
+            : props.waState.run
+            ? btnStop
+            : btnRun}
         </div>
       </div>
 
-      {props.wa.qr === undefined && props.wa.loading && (
+      {props.waState.qr === undefined && props.waState.loading && (
         <div className="flex items-center justify-center space-x-2 animate-pulse">
           <div className="w-8 h-8 bg-primary rounded-full"></div>
           <div className="w-8 h-8 bg-primary rounded-full"></div>
@@ -118,7 +130,7 @@ const Home = (props: any) => {
         </div>
       )}
 
-      {props.wa.qr && <QRCode value={props.wa.qr} />}
+      {props.waState.qr && <QRCode value={props.waState.qr} />}
     </div>
   );
 };
@@ -136,7 +148,7 @@ export const getServerSideProps = wrapper.getServerSideProps(
 );
 
 const mapStateToProps = (state: State) => ({
-  wa: state.wa,
+  waState: state.waState,
 });
 
 const mapActionsToProps = {

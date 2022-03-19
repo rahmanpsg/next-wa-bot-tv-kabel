@@ -76,7 +76,7 @@ class Drawer extends React.Component<MyComponentProps> {
                   {menu.icon}
                   {menu.text}
                   {menu.path == "/admin/pengaduan" && (
-                    <span className="indicator-item badge badge-secondary">
+                    <span className="indicator-item badge badge-secondary motion-safe:animate-bounce">
                       +1
                     </span>
                   )}

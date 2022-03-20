@@ -1,9 +1,9 @@
-import AuthService from "../services/auth";
+import AuthService from "@/services/auth";
 import Router from "next/router";
 import { GrLogout } from "react-icons/gr";
 import { TiThLargeOutline } from "react-icons/ti";
 
-export const Header = () => {
+const Header = () => {
   const logout = async () => {
     try {
       await AuthService.logout();
@@ -38,3 +38,5 @@ export const Header = () => {
     </div>
   );
 };
+
+export default Header;

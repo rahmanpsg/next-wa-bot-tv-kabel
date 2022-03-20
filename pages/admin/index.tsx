@@ -1,7 +1,7 @@
 import { connect } from "react-redux";
-import Layout from "../../components/Layout";
+import Layout from "@/components/Layout";
 
-import { getStatus, runWaBot, stopWaBot } from "../../store/wa/action";
+import { getStatus, runWaBot, stopWaBot } from "@/store/wa/action";
 import { useEffect, ReactElement } from "react";
 import { TiGroup, TiUserAdd, TiDocumentText } from "react-icons/ti";
 import {
@@ -10,8 +10,8 @@ import {
   RiStopCircleFill,
 } from "react-icons/ri";
 
-import { wrapper } from "../../store/store";
-import { waActionTypes } from "../../store/wa/action";
+import { wrapper } from "@/store/store";
+import { waActionTypes } from "@/store/wa/action";
 
 import io from "socket.io-client";
 import QRCode from "react-qr-code";

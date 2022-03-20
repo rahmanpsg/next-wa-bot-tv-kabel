@@ -7,34 +7,26 @@ import React, {
   HTMLInputTypeAttribute,
 } from "react";
 import { connect } from "react-redux";
-import Layout from "../../components/Layout";
+import Layout from "@/components/Layout";
 
-import {
-  getUsers,
-  addUser,
-  editUser,
-  resetUser,
-} from "../../store/user/action";
+import { getUsers, addUser, editUser, resetUser } from "@/store/user/action";
 import { State } from "types";
 
-import { Alert } from "../../components/Alert";
+import Alert from "@/components/Alert";
+import ModalForm from "@/components/ModalForm";
 import Table, { Icolumn, Irow, ItableStyle } from "react-tailwind-table";
 import "react-tailwind-table/dist/index.css";
 import Moment from "react-moment";
 import "moment/locale/id";
 
 import {
-  TiWarning,
-  TiTick,
-  TiTimes,
   TiUserAdd,
   TiEdit,
   TiMinusOutline,
-  TiArrowRight,
   TiDocumentText,
 } from "react-icons/ti";
 
-import { UserState } from "../../types";
+import { UserState } from "@/types";
 
 type PelangganProps = {
   userState: UserState;
@@ -44,7 +36,7 @@ type PelangganProps = {
   resetUser: () => void;
 };
 
-type ItemType = {
+export type ItemType = {
   name: string;
   text: string;
   type?: HTMLInputTypeAttribute;
@@ -155,9 +147,6 @@ const Pelanggan = (props: PelangganProps) => {
     },
   ];
 
-  const getTextItem = (name: string) =>
-    items[items.findIndex((item) => item.name == name)].text;
-
   const columns: Icolumn[] = items.map((item) => {
     return {
       field: item.name,
@@ -243,7 +232,7 @@ const Pelanggan = (props: PelangganProps) => {
           <Alert
             error={props.userState.error}
             message={props.userState.message!}
-            className="max-w-xs animate-backInOutRight"
+            className="max-w-xs animate-backInOutRight alert-sm"
           />
         )}
       </div>
@@ -263,78 +252,14 @@ const Pelanggan = (props: PelangganProps) => {
         className="modal-toggle"
         ref={modalRef}
       />
-      <div className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box ">
-          <h3 className="font-bold text-lg">
-            {aksi == "tambah" ? "Tambah " : "Ubah "}
-            Data Pelanggan
-          </h3>
-          {loading != true && props.userState.error && (
-            <div className="alert alert-warning shadow-lg">
-              <div>
-                <TiWarning size={30} />
-                <div>
-                  <h3 className="font-bold">Informasi</h3>
-                  {[...props.userState.errors!].map(([name, pesan]) => (
-                    <label
-                      className="flex justify-item-center gap-2 text-xs"
-                      key={name}
-                    >
-                      <TiArrowRight size={15} />
-                      <p>{`${getTextItem(name)} ${pesan}`}</p>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          <form ref={formRef} onSubmit={submitForm} className="py-4">
-            {items.map((item) => {
-              if (item.type == null) return;
-              return (
-                <div className="form-control" key={item.text}>
-                  <label className="label">
-                    <span className="label-text">{item.text}</span>
-                  </label>
-                  <input
-                    type={item.type}
-                    name={item.name}
-                    placeholder={`Masukkan ${item.text}`}
-                    className={`input input-bordered ${
-                      !loading &&
-                      props.userState.errors?.has(item.name) &&
-                      "input-error"
-                    }`}
-                    required
-                  />
-                </div>
-              );
-            })}
-          </form>
-          <div className="modal-action">
-            <label
-              htmlFor="my-modal-form"
-              className="btn btn-error btn-sm btn-outline"
-            >
-              <TiTimes size={20} />
-              Batal
-            </label>
-            {loading ? (
-              <button className="btn btn-outline btn-sm btn-primary loading">
-                loading
-              </button>
-            ) : (
-              <button
-                className="btn btn-success btn-sm btn-outline"
-                onClick={() => formRef.current!.requestSubmit()}
-              >
-                <TiTick size={20} />
-                {aksi == "tambah" ? "Simpan" : "Ubah"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <ModalForm
+        formRef={formRef}
+        userState={props.userState}
+        items={items}
+        aksi={aksi}
+        loading={loading}
+        submitForm={submitForm}
+      />
     </div>
   );
 };

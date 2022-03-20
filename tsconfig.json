@@ -8,6 +8,12 @@
       "es2017"
     ],
     "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["components/*"],
+      "@/store/*": ["store/*"],
+      "@/types": ["types/"],
+      "@/services/*": ["services/*"],
+    },
     "moduleResolution": "node",
     "strict": true,
     "allowJs": true,

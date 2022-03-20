@@ -1,4 +1,4 @@
-import AuthService from "../services/auth";
+import AuthService from "@/services/auth";
 import { useEffect } from "react";
 import Router from "next/router";
 

@@ -6,7 +6,7 @@ type AlertProps = {
   className?: string;
 };
 
-export const Alert = (props: AlertProps) => (
+const Alert = (props: AlertProps) => (
   <div
     className={`alert text-white ${
       props.error ? "alert-warning" : "alert-success"
@@ -18,3 +18,5 @@ export const Alert = (props: AlertProps) => (
     </div>
   </div>
 );
+
+export default Alert;

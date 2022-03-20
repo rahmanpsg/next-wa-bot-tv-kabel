@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FormEvent } from "react";
-import { Alert } from "./Alert";
+import Alert from "./Alert";
 import { FaSignInAlt } from "react-icons/fa";
 import { AuthState } from "types";
 import Router from "next/router";

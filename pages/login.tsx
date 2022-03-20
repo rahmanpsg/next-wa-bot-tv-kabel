@@ -1,7 +1,7 @@
 import { connect } from "react-redux";
-import { loginAuth } from "../store/auth/action";
-import LoginForm from "../components/LoginForm";
-import { AuthState, State } from "../types";
+import { loginAuth } from "@/store/auth/action";
+import LoginForm from "@/components/LoginForm";
+import { AuthState, State } from "@/types";
 
 type LoginProps = {
   authState: AuthState;

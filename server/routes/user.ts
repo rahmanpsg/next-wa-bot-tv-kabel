@@ -1,5 +1,5 @@
 import express from "express";
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import { Model } from "mongoose";
 import { IUser } from "../models/user";
 // import authMiddleware from "../middleware/auth";
@@ -125,5 +125,27 @@ router.put(
     }
   }
 );
+
+router.delete("/:id", validate([param("id").notEmpty()]), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    userModel.deleteOne({ _id: id }, (err) => {
+      if (err) return res.status(500).send({ error: true, message: err });
+
+      res.status(200).send({
+        error: false,
+        message: "Pelanggan berhasil dihapus",
+        id,
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error: true,
+      message: "Data gagal diubah, terjadi masalah di server",
+    });
+  }
+});
 
 export default router;

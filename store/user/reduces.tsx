@@ -24,7 +24,7 @@ export default function reducer(state = userInitialStat, action: any) {
         error: action.payload.error,
         errors: userInitialStat.errors,
       };
-    case userActionTypes.UPDATE:
+    case userActionTypes.UPDATE: {
       const userIndex = state.users.findIndex(
         (user) => user._id == action.payload.user._id
       );
@@ -37,6 +37,21 @@ export default function reducer(state = userInitialStat, action: any) {
         error: action.payload.error,
         errors: userInitialStat.errors,
       };
+    }
+    case userActionTypes.DELETE: {
+      const userIndex = state.users.findIndex(
+        (user) => user._id == action.payload.id
+      );
+
+      if (userIndex != -1) state.users.splice(userIndex, 1);
+
+      return {
+        users: state.users,
+        message: action.payload.message,
+        error: action.payload.error,
+        errors: userInitialStat.errors,
+      };
+    }
     case userActionTypes.ERROR:
       const errors = new Map<string, string>();
 

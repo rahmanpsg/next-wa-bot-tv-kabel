@@ -23,7 +23,9 @@ app.use(express.json());
 
 app.use((req: any, _, next) => {
   req.io = io;
-  next();
+  setTimeout(() => {
+    next();
+  }, 0);
 });
 
 app.use("/api/auth", authRoutes);

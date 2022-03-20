@@ -9,6 +9,8 @@ const Home = () => {
         await AuthService.verify();
         Router.replace("/admin");
       } catch (error) {
+        console.log(error);
+
         Router.replace("/login");
       }
     }, 1000);

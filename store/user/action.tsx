@@ -4,6 +4,7 @@ export const userActionTypes = {
   GET: "GET_USER",
   ADD: "ADD_USER",
   UPDATE: "UPDATE_USER",
+  DELETE: "DELETE_USER",
   ERROR: "ERROR_USER",
   RESET: "RESET_USER",
 };
@@ -32,6 +33,15 @@ export const editUser =
       return dispatch({ type: userActionTypes.ERROR, payload: error });
     }
   };
+
+export const deleteUser = (id: string) => async (dispatch: any) => {
+  try {
+    const res = await UserService.delete(id);
+    return dispatch({ type: userActionTypes.DELETE, payload: res });
+  } catch (error: any) {
+    return dispatch({ type: userActionTypes.ERROR, payload: error });
+  }
+};
 
 export const resetUser = () => (dispatch: any) => {
   return dispatch({ type: userActionTypes.RESET });

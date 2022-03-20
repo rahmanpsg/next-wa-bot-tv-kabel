@@ -42,6 +42,16 @@ class UserService {
       throw error.response.data;
     }
   }
+
+  async delete(id: string) {
+    try {
+      const res = await axios.delete(this.END_POINT + id);
+
+      return res.data;
+    } catch (error: any) {
+      throw error.response.data;
+    }
+  }
 }
 
 export default new UserService();

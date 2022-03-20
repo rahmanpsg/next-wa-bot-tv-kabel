@@ -9,80 +9,99 @@ import React, {
 import { connect } from "react-redux";
 import Layout from "@/components/Layout";
 
-import { getUsers, addUser, editUser, resetUser } from "@/store/user/action";
+import {
+  getUsers,
+  addUser,
+  editUser,
+  deleteUser,
+  resetUser,
+} from "@/store/user/action";
 import { State } from "types";
 
 import Alert from "@/components/Alert";
+import TableCustom from "@/components/TableCustom";
 import ModalForm from "@/components/ModalForm";
-import Table, { Icolumn, Irow, ItableStyle } from "react-tailwind-table";
-import "react-tailwind-table/dist/index.css";
-import Moment from "react-moment";
-import "moment/locale/id";
+import ModalAksi from "@/components/ModalAksi";
 
-import {
-  TiUserAdd,
-  TiEdit,
-  TiMinusOutline,
-  TiDocumentText,
-} from "react-icons/ti";
+import { TiUserAdd, TiWarning } from "react-icons/ti";
 
 import { UserState } from "@/types";
+import { Irow } from "react-tailwind-table";
 
 type PelangganProps = {
   userState: UserState;
   getUsers: () => void;
   addUser: (formData: FormData) => void;
   editUser: (formData: FormData, id: string) => void;
+  deleteUser: (id: string) => void;
   resetUser: () => void;
 };
 
-export type ItemType = {
+export type HeadersType = {
   name: string;
   text: string;
   type?: HTMLInputTypeAttribute;
 };
 
 const Pelanggan = (props: PelangganProps) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [idUserSelected, setIdUserSelected] = useState(null);
   const [aksi, setAksi] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const modalRef = useRef<HTMLInputElement>(null);
+  const modalFormRef = useRef<HTMLInputElement>(null);
+  const modalAksiRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!props.userState.users.length) setLoading(true);
     props.getUsers();
   }, []);
 
   useEffect(() => {
-    setLoading(false);
-  }, [props.userState]);
+    if (loading) {
+      setLoading(false);
+    }
+  }, [props.userState.message]);
 
   useEffect(() => {
     if (props.userState.errors !== null) return;
 
-    if (modalRef.current?.checked) {
-      modalRef.current?.click();
-
-      if (showMessage) return;
-
-      setShowMessage(true);
-
-      setTimeout(() => {
-        setShowMessage(false);
-      }, 4000);
+    if (aksi != "hapus" && modalFormRef.current?.checked) {
+      modalFormRef.current?.click();
+    } else if (aksi == "hapus" && modalAksiRef.current?.checked) {
+      modalAksiRef.current?.click();
+    } else {
+      return;
     }
+
+    if (showMessage) return;
+
+    setShowMessage(true);
+
+    setTimeout(() => {
+      setShowMessage(false);
+      props.resetUser();
+    }, 4000);
   }, [props.userState]);
 
-  const submitForm = async (e: FormEvent) => {
-    e.preventDefault();
+  const submitForm = async (e?: FormEvent) => {
+    e?.preventDefault();
 
     const data = new FormData(formRef.current!);
 
     try {
       setLoading(true);
-      if (aksi == "tambah") props.addUser(data);
-      else if (aksi == "edit") props.editUser(data, idUserSelected!);
+      switch (aksi) {
+        case "tambah":
+          props.addUser(data);
+          break;
+        case "edit":
+          props.editUser(data, idUserSelected!);
+          break;
+        case "hapus":
+          props.deleteUser(idUserSelected!);
+          break;
+      }
     } catch (error) {
       console.log(error);
     }
@@ -112,7 +131,12 @@ const Pelanggan = (props: PelangganProps) => {
     }
   };
 
-  const items: ItemType[] = [
+  const hapusClick = (row: Irow) => {
+    setIdUserSelected(row._id);
+    setAksi("hapus");
+  };
+
+  const headers: HeadersType[] = [
     {
       name: "no",
       text: "#",
@@ -147,67 +171,6 @@ const Pelanggan = (props: PelangganProps) => {
     },
   ];
 
-  const columns: Icolumn[] = items.map((item) => {
-    return {
-      field: item.name,
-      use: item.text,
-    };
-  });
-
-  const rows: Irow[] = props.userState.users.map((user, idx) => {
-    return { no: idx + 1, ...user };
-  });
-
-  const rowcheck = (row: Irow, column: Icolumn, display_value: any) => {
-    if (column.field === "createdAt") {
-      return (
-        <Moment format="llll" locale="id">
-          {display_value}
-        </Moment>
-      );
-    } else if (column.field === "aksi") {
-      return (
-        <div className="flex gap-2">
-          <div className="tooltip" data-tip="Lihat Data Pelanggan">
-            <button className="btn btn-sm btn-outline btn-primary text-white">
-              <TiDocumentText size={18} />
-            </button>
-          </div>
-          <div className="tooltip" data-tip="Ubah Data Pelanggan">
-            <label
-              onClick={() => {
-                editClick(row);
-              }}
-              htmlFor="my-modal-form"
-              className="btn btn-sm btn-outline btn-warning text-white"
-            >
-              <TiEdit size={18} />
-            </label>
-          </div>
-          <div className="tooltip" data-tip="Hapus Data Pelanggan">
-            <button className="btn btn-sm btn-outline btn-error text-white">
-              <TiMinusOutline size={18} />
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    if (column.field === "name") {
-      return <b>{display_value}</b>;
-    }
-
-    return display_value;
-  };
-
-  const style: ItableStyle = {
-    base_bg_color: "bg-green-700",
-    base_text_color: "text-green-600",
-    table_head: {
-      table_data: "bg-primary",
-    },
-  };
-
   return (
     <div className="container">
       <div className="flex md:flex-row flex-col gap-2 justify-between">
@@ -237,28 +200,29 @@ const Pelanggan = (props: PelangganProps) => {
         )}
       </div>
 
-      <Table
-        columns={columns}
-        rows={rows}
-        row_render={rowcheck}
-        per_page={7}
-        no_content_text="Tidak ada data"
-        styling={style}
+      <TableCustom
+        headers={headers}
+        data={props.userState.users}
+        editClick={editClick}
+        hapusClick={hapusClick}
       />
 
-      <input
-        type="checkbox"
-        id="my-modal-form"
-        className="modal-toggle"
-        ref={modalRef}
-      />
       <ModalForm
+        modalRef={modalFormRef}
         formRef={formRef}
-        userState={props.userState}
-        items={items}
+        state={props.userState}
+        headers={headers}
         aksi={aksi}
         loading={loading}
         submitForm={submitForm}
+      />
+
+      <ModalAksi
+        modalRef={modalAksiRef}
+        icon={<TiWarning size={50} className="text-warning" />}
+        message="Data pelanggan akan dihapus?"
+        loading={loading}
+        submit={submitForm}
       />
     </div>
   );
@@ -272,6 +236,7 @@ const mapActionsToProps = {
   getUsers,
   addUser,
   editUser,
+  deleteUser,
   resetUser,
 };
 

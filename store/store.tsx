@@ -35,6 +35,9 @@ const reducer: Reducer<State, AnyAction> = (state, action) => {
       ...state,
       ...action.payload,
     };
+
+    if (state?.userState.users) nextState.userState = state.userState;
+
     return nextState;
   } else {
     return combineReducer(state, action);

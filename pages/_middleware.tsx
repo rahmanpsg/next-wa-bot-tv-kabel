@@ -1,31 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verify } from "jsonwebtoken";
-import { NextURL } from "next/dist/server/web/next-url";
 
-export function middleware(req: NextRequest) {
-  const { jwt } = req.cookies;
+export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
-  if (process.env.NODE_ENV == "production")
-    return redirectIfAuthenticated(jwt, url);
-}
+  if (process.env.NODE_ENV == "production") {
+    const { pathname } = url;
 
-const redirectIfAuthenticated = (jwt: string, url: NextURL) => {
-  const { pathname } = url;
+    try {
+      const baseURL = process.env.baseURL;
 
-  try {
-    verify(jwt, process.env.TOKEN_KEY!);
+      const { jwt } = req.cookies;
 
-    url.pathname = "/admin";
+      if (jwt == undefined) throw "Belum login";
 
-    if (pathname != "/" && !pathname.includes("/admin").valueOf())
-      return NextResponse.redirect(url);
-  } catch (error) {
-    if (pathname != "/" && url.pathname != "/login") {
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
+      const res = await fetch(baseURL + "api/auth", {
+        headers: {
+          Cookie: `jwt=${jwt}`,
+        },
+      });
+      const json = await res.json();
+
+      if (!json.error) {
+        url.pathname = "/admin";
+
+        if (pathname != "/" && !pathname.includes("/admin").valueOf())
+          return NextResponse.redirect(url);
+      } else if (pathname != "/" && url.pathname != "/login") {
+        url.pathname = "/login";
+        return NextResponse.redirect(url);
+      }
+    } catch (error) {
+      console.log(error);
+
+      if (pathname != "/" && url.pathname != "/login") {
+        url.pathname = "/login";
+        return NextResponse.redirect(url);
+      }
     }
   }
 
   return NextResponse.next();
-};
+}

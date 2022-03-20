@@ -26,8 +26,10 @@ type HomeProps = {
 };
 
 const Home = (props: HomeProps) => {
+  const socket = io(process.env.baseURL!);
+
   useEffect(() => {
-    const socket = io(process.env.baseURL!);
+    console.log(socket.connected);
 
     socket.on("connect", () => {
       console.log("socket connected");

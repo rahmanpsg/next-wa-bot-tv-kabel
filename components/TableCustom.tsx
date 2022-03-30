@@ -4,15 +4,18 @@ import "react-tailwind-table/dist/index.css";
 import Moment from "react-moment";
 import "moment/locale/id";
 
-import { TiEdit, TiMinusOutline, TiDocumentText } from "react-icons/ti";
+import { TiEdit, TiMinusOutline, TiTick, TiTimes } from "react-icons/ti";
 import { HeadersType } from "pages/admin/pelanggan";
-import { Users } from "types";
+import { Pembayarans, Pengaduans, Users } from "types";
 
 type TableCustomProps = {
   headers: HeadersType[];
-  data: Array<Users>;
-  editClick: (row: Irow) => void;
-  hapusClick: (row: Irow) => void;
+  data: Array<Users | Pengaduans | Pembayarans>;
+  detailClick?: (row: Irow) => void;
+  editClick?: (row: Irow) => void;
+  hapusClick?: (row: Irow) => void;
+  terimaClick?: (row: Irow) => void;
+  tolakClick?: (row: Irow) => void;
 };
 
 const TableCustom = (props: TableCustomProps) => {
@@ -39,21 +42,70 @@ const TableCustom = (props: TableCustomProps) => {
     if (column.field === "createdAt") {
       return (
         <Moment format="llll" locale="id">
-          {display_value}
+          {display_value.toString()}
         </Moment>
+      );
+    } else if (column.field === "foto") {
+      return (
+        <a href={display_value.toString()} target="_blank">
+          <img src={display_value.toString()} width="50" />
+        </a>
+      );
+    } else if (column.field === "status") {
+      return display_value === true ? (
+        <div className="tooltip" data-tip="Pembayaran di Terima">
+          <TiTick color="green" size={25} />
+        </div>
+      ) : (
+        <div className="tooltip" data-tip="Pembayaran di Tolak">
+          <TiTimes color="red" size={25} />
+        </div>
+      );
+    } else if (column.field === "konfirmasi") {
+      return (
+        <div className="flex gap-2">
+          <div className="tooltip" data-tip="Terima Pembayaran">
+            <label
+              onClick={() => {
+                props.terimaClick!(row);
+              }}
+              htmlFor="my-modal-aksi"
+              className="btn btn-sm btn-outline btn-success text-white"
+            >
+              <TiTick size={18} />
+            </label>
+          </div>
+          <div className="tooltip" data-tip="Tolak Pembayaran">
+            <label
+              onClick={() => {
+                props.tolakClick!(row);
+              }}
+              htmlFor="my-modal-aksi"
+              className="btn btn-sm btn-outline btn-error text-white"
+            >
+              <TiTimes size={18} />
+            </label>
+          </div>
+        </div>
       );
     } else if (column.field === "aksi") {
       return (
         <div className="flex gap-2">
-          <div className="tooltip" data-tip="Lihat Data Pelanggan">
-            <button className="btn btn-sm btn-outline btn-primary text-white">
+          {/* <div className="tooltip" data-tip="Lihat Data Pelanggan">
+            <label
+              onClick={() => {
+                props.detailClick!(row);
+              }}
+              htmlFor="my-modal-detail"
+              className="btn btn-sm btn-outline btn-primary text-white"
+            >
               <TiDocumentText size={18} />
-            </button>
-          </div>
+            </label>
+          </div> */}
           <div className="tooltip" data-tip="Ubah Data Pelanggan">
             <label
               onClick={() => {
-                props.editClick(row);
+                props.editClick!(row);
               }}
               htmlFor="my-modal-form"
               className="btn btn-sm btn-outline btn-warning text-white"
@@ -64,7 +116,7 @@ const TableCustom = (props: TableCustomProps) => {
           <div className="tooltip" data-tip="Hapus Data Pelanggan">
             <label
               onClick={() => {
-                props.hapusClick(row);
+                props.hapusClick!(row);
               }}
               htmlFor="my-modal-aksi"
               className="btn btn-sm btn-outline btn-error text-white"
@@ -74,10 +126,6 @@ const TableCustom = (props: TableCustomProps) => {
           </div>
         </div>
       );
-    }
-
-    if (column.field === "name") {
-      return <b>{display_value}</b>;
     }
 
     return display_value;
@@ -91,6 +139,7 @@ const TableCustom = (props: TableCustomProps) => {
       per_page={7}
       no_content_text="Tidak ada data"
       styling={style}
+      should_export={false}
     />
   );
 };

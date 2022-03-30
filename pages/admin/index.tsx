@@ -10,7 +10,7 @@ import {
   RiStopCircleFill,
 } from "react-icons/ri";
 
-import { wrapper } from "@/store/store";
+// import { wrapper } from "@/store/store";
 import { waActionTypes } from "@/store/wa/action";
 
 import io from "socket.io-client";
@@ -30,6 +30,8 @@ const Home = (props: HomeProps) => {
 
   useEffect(() => {
     console.log(socket.connected);
+
+    if (props.waState.loading) props.getStatus();
 
     socket.on("connect", () => {
       console.log("socket connected");
@@ -137,17 +139,17 @@ const Home = (props: HomeProps) => {
   );
 };
 
-export const getServerSideProps = wrapper.getServerSideProps(
-  // @ts-ignore
-  (store) => async () => {
-    const END_POINT = process.env.baseURL + "api/wa/";
-    const res = await fetch(END_POINT);
+// export const getServerSideProps = wrapper.getServerSideProps(
+//   // @ts-ignore
+//   (store) => async () => {
+//     const END_POINT = process.env.baseURL + "api/wa/";
+//     const res = await fetch(END_POINT);
 
-    const json = await res.json();
+//     const json = await res.json();
 
-    store.dispatch({ type: waActionTypes.UPDATE, payload: json });
-  }
-);
+//     store.dispatch({ type: waActionTypes.UPDATE, payload: json });
+//   }
+// );
 
 const mapStateToProps = (state: State) => ({
   waState: state.waState,

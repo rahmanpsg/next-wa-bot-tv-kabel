@@ -25,8 +25,36 @@ export type UserState = {
   errors: Map<string, string> | null;
 };
 
+export type Pengaduans = {
+  _id: string;
+  user: Users;
+  pengaduan: string;
+  createdAt: string;
+};
+
+export type PengaduanState = {
+  pengaduans: Array<Pengaduans>;
+};
+
+export type Pembayarans = {
+  _id: string;
+  user: Users;
+  foto: string;
+  status: boolean;
+  bulan: Array<number>;
+  createdAt: string;
+};
+
+export type PembayaranState = {
+  pembayarans: Array<Pembayarans>;
+  message: string | null;
+  error: boolean;
+};
+
 export interface State {
   authState: AuthState;
   waState: WaState;
   userState: UserState;
+  pengaduanState: PengaduanState;
+  pembayaranState: PembayaranState;
 }

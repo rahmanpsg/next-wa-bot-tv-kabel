@@ -16,16 +16,16 @@ import {
   deleteUser,
   resetUser,
 } from "@/store/user/action";
-import { State } from "types";
 
 import Alert from "@/components/Alert";
 import TableCustom from "@/components/TableCustom";
+import ModalDetail from "@/components/ModalDetail";
 import ModalForm from "@/components/ModalForm";
 import ModalAksi from "@/components/ModalAksi";
 
 import { TiUserAdd, TiWarning } from "react-icons/ti";
 
-import { UserState } from "@/types";
+import { State, UserState } from "@/types";
 import { Irow } from "react-tailwind-table";
 
 type PelangganProps = {
@@ -45,10 +45,11 @@ export type HeadersType = {
 
 const Pelanggan = (props: PelangganProps) => {
   const [loading, setLoading] = useState(false);
-  const [idUserSelected, setIdUserSelected] = useState(null);
+  const [idUserSelected, setIdUserSelected] = useState(undefined);
   const [aksi, setAksi] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const modalDetailRef = useRef<HTMLInputElement>(null);
   const modalFormRef = useRef<HTMLInputElement>(null);
   const modalAksiRef = useRef<HTMLInputElement>(null);
 
@@ -61,9 +62,7 @@ const Pelanggan = (props: PelangganProps) => {
     if (loading) {
       setLoading(false);
     }
-  }, [props.userState.message]);
 
-  useEffect(() => {
     if (props.userState.errors !== null) return;
 
     if (aksi != "hapus" && modalFormRef.current?.checked) {
@@ -116,6 +115,10 @@ const Pelanggan = (props: PelangganProps) => {
       const input = formRef.current?.children.item(index)?.children.item(1);
       input?.removeAttribute("value");
     }
+  };
+
+  const detailClick = (row: Irow) => {
+    setIdUserSelected(row._id);
   };
 
   const editClick = (row: Irow) => {
@@ -203,9 +206,12 @@ const Pelanggan = (props: PelangganProps) => {
       <TableCustom
         headers={headers}
         data={props.userState.users}
+        detailClick={detailClick}
         editClick={editClick}
         hapusClick={hapusClick}
       />
+
+      <ModalDetail modalRef={modalDetailRef} id={idUserSelected} />
 
       <ModalForm
         modalRef={modalFormRef}

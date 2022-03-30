@@ -8,15 +8,29 @@ import {
   DisconnectReason,
   LegacySocketConfig,
   Browsers,
+  delay,
+  AnyMessageContent,
+  proto,
   //   delay,
 } from "@adiwajshing/baileys";
 
 import { Response } from "express";
 import socketio from "socket.io";
 
+import { Model } from "mongoose";
+import { IUser } from "./models/user";
+
+const userModel: Model<IUser> = require("./models/user");
+
 const sessionId = "tv_kabel";
 const sessions = new Map();
 const retries = new Map();
+
+const chatSession = new Map<string, string>();
+const daftarSession = new Map<
+  string,
+  { nik: number; nama: string; alamat: string }
+>();
 
 const init = () => {
   readdir(join(__dirname, "sessions"), (err, files) => {
@@ -83,19 +97,26 @@ const createSession = async (
 
   wa.ev.on("creds.update", saveState);
 
-  //   wa.ev.on("messages.upsert", async (m) => {
-  //     const message = m.messages[0];
+  wa.ev.on("messages.upsert", async (m) => {
+    // if (m.type === "append" || m.type === "notify") {
+    //   console.log(JSON.stringify(m, undefined, 2));
+    // }
 
-  //     if (!message.key.fromMe && m.type === "notify") {
-  //       await delay(1000);
+    const msg = m.messages[0];
+    if (!msg.key.fromMe && m.type === "notify") {
+      console.log(msg.message);
 
-  //       await wa.sendReadReceipt(
-  //         message.key.remoteJid!,
-  //         message.key.participant!,
-  //         [message.key.id!]
-  //       );
-  //     }
-  //   });
+      await wa!.chatRead(msg.key, 1);
+
+      // fungsi untuk membalas pesan
+      const messageContent: AnyMessageContent = await checkPesan(
+        msg.message!,
+        msg.key.remoteJid!
+      );
+
+      await sendMessageWTyping(wa, messageContent, msg.key.remoteJid!);
+    }
+  });
 
   wa.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
@@ -182,6 +203,166 @@ const deleteSession = () => {
 
   sessions.delete(sessionId);
   retries.delete(sessionId);
+};
+
+// Logic pesan chat bot
+async function checkPesan(
+  message: proto.IMessage,
+  remoteJid: string
+): Promise<AnyMessageContent> {
+  const buttons = [
+    {
+      buttonId: "#daftar",
+      buttonText: { displayText: "Daftar Baru" },
+      type: 1,
+    },
+    {
+      buttonId: "#pengaduan",
+      buttonText: { displayText: "Pengaduan" },
+      type: 1,
+    },
+    {
+      buttonId: "#pembayaran",
+      buttonText: { displayText: "Pembayaran" },
+      type: 1,
+    },
+  ];
+
+  const telpon = remoteJid.split("@")[0];
+
+  // Periksa jika nomor telah terdaftar
+  const cekUser = await userModel.countDocuments({ telpon });
+
+  if (cekUser > 0) buttons.splice(0, 1);
+  else buttons.splice(-2);
+
+  const messageContent: AnyMessageContent = {
+    text: "Halo, saya adalah chat bot TV Kabel. Silahkan pilih layanan yang ingin anda gunakan.",
+    footer: "Daftar Layanan",
+    buttons: buttons,
+  };
+
+  console.log(chatSession);
+
+  if (chatSession.has(remoteJid)) {
+    delete messageContent.footer;
+    delete messageContent.buttons;
+    if (message.buttonsResponseMessage != null)
+      // fungsi jika pesan dari tombol
+      switch (message.buttonsResponseMessage.selectedButtonId) {
+        case "#daftar":
+          {
+            messageContent.text =
+              "Silahkan masukkan data anda sesuai dengan format berikut, \nnama#nik#alamat";
+          }
+          break;
+        case "#daftar_oke":
+          {
+            try {
+              if (daftarSession.has(remoteJid)) {
+                const { nik, nama, alamat } = daftarSession.get(remoteJid)!;
+
+                const user = await userModel.create({
+                  nik,
+                  nama,
+                  alamat,
+                  telpon,
+                });
+
+                user.save((err) => {
+                  if (err)
+                    throw "Terjadi masalah di server. Silahkan coba beberapa saat lagi.";
+
+                  messageContent.text =
+                    "Terimakasih telah mendaftar. \nSilahkan tunggu konfirmasi dari admin";
+                });
+              }
+            } catch (error) {
+              console.log(error);
+              messageContent.text = error as string;
+            }
+          }
+          break;
+        default:
+          messageContent.text = "Maaf, layanan tidak tersedia";
+      }
+    else if (message.conversation != null)
+      // fungsi jika pesan di ketik
+      switch (chatSession.get(remoteJid)) {
+        case "#daftar":
+          {
+            try {
+              const data = message.conversation.split("#");
+              const [nama, nik, alamat] = data;
+
+              // Validasi data
+              if (data.length !== 3) throw "Maaf, format data anda salah";
+
+              if (nama === "" || nik === "" || alamat === "")
+                throw "Maaf, data anda tidak boleh kosong";
+
+              // Validasi nik
+              if (Number.isNaN(parseInt(nik)))
+                throw "Maaf, format NIK anda salah";
+              if (nik.length !== 16) throw "Maaf, NIK harus 16 digit";
+
+              messageContent.text = `Nama : ${nama} \nNIK : ${nik} \nAlamat : ${alamat}`;
+              messageContent.footer = "Konfirmasi Data Anda";
+              messageContent.buttons = [
+                {
+                  buttonId: "#daftar_oke",
+                  buttonText: { displayText: "Oke" },
+                  type: 1,
+                },
+                {
+                  buttonId: "#daftar",
+                  buttonText: { displayText: "Ulang" },
+                  type: 1,
+                },
+              ];
+
+              // Menyimpan data ke session sebelum disimpan
+              daftarSession.set(remoteJid, {
+                nama,
+                nik: parseInt(nik),
+                alamat,
+              });
+            } catch (error) {
+              message.buttonsResponseMessage = {
+                selectedButtonId: "#daftar",
+              };
+              console.log(error);
+              messageContent.text = error as string;
+            }
+          }
+          break;
+        default:
+          messageContent.text = "Maaf, layanan tidak tersedia";
+      }
+  }
+
+  chatSession.set(
+    remoteJid,
+    message.buttonsResponseMessage?.selectedButtonId ?? message.conversation!
+  );
+
+  return messageContent;
+}
+
+const sendMessageWTyping = async (
+  wa: any,
+  msg: AnyMessageContent,
+  jid: string
+) => {
+  await wa.presenceSubscribe(jid);
+  await delay(500);
+
+  await wa.sendPresenceUpdate("composing", jid);
+  await delay(2000);
+
+  await wa.sendPresenceUpdate("paused", jid);
+
+  await wa.sendMessage(jid, msg);
 };
 
 export { init, createSession, getSession, deleteSession };

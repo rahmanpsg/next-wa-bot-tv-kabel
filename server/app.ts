@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth";
 import waRoutes from "./routes/wa";
 import userRoutes from "./routes/user";
+import pengaduanRoutes from "./routes/pengaduan";
+import pembayaranRoutes from "./routes/pembayaran";
 
 const io: socketio.Server = new socketio.Server();
 
@@ -23,13 +25,13 @@ app.use(express.json());
 
 app.use((req: any, _, next) => {
   req.io = io;
-  setTimeout(() => {
-    next();
-  }, 0);
+  next();
 });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/wa", waRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/pengaduan", pengaduanRoutes);
+app.use("/api/pembayaran", pembayaranRoutes);
 
 module.exports = { app, io };

@@ -21,9 +21,7 @@ const validate = (validations: ValidationChain[]) => {
     if (errors.isEmpty()) {
       return next();
     }
-    setTimeout(() => {
-      res.status(400).json({ error: true, errors: errors.mapped() });
-    }, 2000);
+    res.status(400).json({ error: true, errors: errors.mapped() });
   };
 };
 

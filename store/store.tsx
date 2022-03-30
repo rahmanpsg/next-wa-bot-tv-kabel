@@ -12,6 +12,8 @@ import thunkMiddleware from "redux-thunk";
 import authState from "./auth/reduces";
 import waState from "./wa/reduces";
 import userState from "./user/reduces";
+import pengaduanState from "./pengaduan/reduces";
+import pembayaranState from "./pembayaran/reduces";
 
 import { State } from "types";
 
@@ -27,6 +29,8 @@ const combineReducer = combineReducers({
   authState,
   waState,
   userState,
+  pengaduanState,
+  pembayaranState,
 });
 
 const reducer: Reducer<State, AnyAction> = (state, action) => {

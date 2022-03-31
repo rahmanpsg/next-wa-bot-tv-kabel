@@ -4,14 +4,21 @@ import "react-tailwind-table/dist/index.css";
 import Moment from "react-moment";
 import "moment/locale/id";
 
-import { TiEdit, TiMinusOutline, TiTick, TiTimes } from "react-icons/ti";
+import {
+  TiEdit,
+  TiTrash,
+  TiTickOutline,
+  TiTick,
+  TiTimes,
+  TiThList,
+} from "react-icons/ti";
 import { HeadersType } from "pages/admin/pelanggan";
 import { Pembayarans, Pengaduans, Users } from "types";
 
 type TableCustomProps = {
   headers: HeadersType[];
   data: Array<Users | Pengaduans | Pembayarans>;
-  detailClick?: (row: Irow) => void;
+  statusClick?: (row: Irow, aktif: boolean) => void;
   editClick?: (row: Irow) => void;
   hapusClick?: (row: Irow) => void;
   terimaClick?: (row: Irow) => void;
@@ -61,6 +68,16 @@ const TableCustom = (props: TableCustomProps) => {
           <TiTimes color="red" size={25} />
         </div>
       );
+    } else if (column.field === "aktif") {
+      return display_value === undefined ? (
+        <div className="badge badge-sm badge-warning w-32 text-white">
+          Belum di Aktifkan
+        </div>
+      ) : display_value === true ? (
+        <div className="badge badge-sm badge-success w-32">Aktif</div>
+      ) : (
+        <div className="badge badge-sm badge-error w-32">Tidak Aktif</div>
+      );
     } else if (column.field === "konfirmasi") {
       return (
         <div className="flex gap-2">
@@ -90,42 +107,89 @@ const TableCustom = (props: TableCustomProps) => {
       );
     } else if (column.field === "aksi") {
       return (
-        <div className="flex gap-2">
-          {/* <div className="tooltip" data-tip="Lihat Data Pelanggan">
-            <label
-              onClick={() => {
-                props.detailClick!(row);
-              }}
-              htmlFor="my-modal-detail"
-              className="btn btn-sm btn-outline btn-primary text-white"
-            >
-              <TiDocumentText size={18} />
-            </label>
-          </div> */}
-          <div className="tooltip" data-tip="Ubah Data Pelanggan">
-            <label
-              onClick={() => {
-                props.editClick!(row);
-              }}
-              htmlFor="my-modal-form"
-              className="btn btn-sm btn-outline btn-warning text-white"
-            >
-              <TiEdit size={18} />
-            </label>
-          </div>
-          <div className="tooltip" data-tip="Hapus Data Pelanggan">
-            <label
-              onClick={() => {
-                props.hapusClick!(row);
-              }}
-              htmlFor="my-modal-aksi"
-              className="btn btn-sm btn-outline btn-error text-white"
-            >
-              <TiMinusOutline size={18} />
-            </label>
-          </div>
+        <div
+          className={`dropdown dropdown-left ${row.no != 1 && "dropdown-end"}`}
+        >
+          <label tabIndex={0} className="btn btn-sm btn-ghost m-1">
+            <TiThList color="green" size={18} />
+          </label>
+          <ul
+            tabIndex={0}
+            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-60"
+          >
+            <li>
+              {row.aktif === true ? (
+                <label
+                  onClick={() => props.statusClick!(row, false)}
+                  htmlFor="my-modal-aksi"
+                >
+                  <TiTimes color="red" size={18} /> Non Aktifkan
+                </label>
+              ) : (
+                <label
+                  onClick={() => props.statusClick!(row, true)}
+                  htmlFor="my-modal-aksi"
+                >
+                  <TiTickOutline color="green" size={18} /> Aktifkan
+                </label>
+              )}
+            </li>
+            <li>
+              <label
+                onClick={() => props.editClick!(row)}
+                htmlFor="my-modal-form"
+              >
+                <TiEdit color="orange" size={18} /> Ubah Data Pelanggan
+              </label>
+            </li>
+            <li>
+              <label
+                onClick={() => props.hapusClick!(row)}
+                htmlFor="my-modal-aksi"
+              >
+                <TiTrash color="red" size={18} /> Hapus Data Pelanggan
+              </label>
+            </li>
+          </ul>
         </div>
       );
+      // return (
+      //   <div className="flex gap-2">
+      //     {/* <div className="tooltip" data-tip="Lihat Data Pelanggan">
+      //       <label
+      //         onClick={() => {
+      //           props.detailClick!(row);
+      //         }}
+      //         htmlFor="my-modal-detail"
+      //         className="btn btn-sm btn-outline btn-primary text-white"
+      //       >
+      //         <TiDocumentText size={18} />
+      //       </label>
+      //     </div> */}
+      //     <div className="tooltip" data-tip="Ubah Data Pelanggan">
+      //       <label
+      //         onClick={() => {
+      //           props.editClick!(row);
+      //         }}
+      //         htmlFor="my-modal-form"
+      //         className="btn btn-sm btn-outline btn-warning text-white"
+      //       >
+      //         <TiEdit size={18} />
+      //       </label>
+      //     </div>
+      //     <div className="tooltip" data-tip="Hapus Data Pelanggan">
+      //       <label
+      //         onClick={() => {
+      //           props.hapusClick!(row);
+      //         }}
+      //         htmlFor="my-modal-aksi"
+      //         className="btn btn-sm btn-outline btn-error text-white"
+      //       >
+      //         <TiMinusOutline size={18} />
+      //       </label>
+      //     </div>
+      //   </div>
+      // );
     }
 
     return display_value;

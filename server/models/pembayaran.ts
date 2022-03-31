@@ -4,7 +4,7 @@ export interface IPembayaran extends Document {
   user: Schema.Types.ObjectId;
   foto: string;
   status: boolean;
-  bulan: Array<number>;
+  bulan: Array<string>;
 }
 
 const schema: Schema = new Schema<IPembayaran>(
@@ -16,7 +16,7 @@ const schema: Schema = new Schema<IPembayaran>(
     },
     foto: String,
     status: Boolean,
-    bulan: [Number],
+    bulan: [String],
   },
   { timestamps: true }
 );

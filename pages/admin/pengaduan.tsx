@@ -61,7 +61,7 @@ const Pengaduan = (props: PengaduanProps) => {
   ];
 
   return (
-    <div className="container">
+    <div className="container outline outline-1 outline-gray-300 rounded p-2">
       <div className="flex md:flex-row flex-col gap-2 justify-between">
         {loading && (
           <div className="flex items-center space-x-2 animate-pulse">

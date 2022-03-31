@@ -1,40 +1,17 @@
 import express from "express";
-import { Model } from "mongoose";
-import { IPembayaran } from "../models/pembayaran";
-
-const pembayaranModel: Model<IPembayaran> = require("../models/pembayaran");
+import PembayaranController from "../controller/pembayaran";
 const router = express.Router();
 
-router.get("/", async (_, res) => {
-  const pembayarans = await pembayaranModel
-    .find()
-    .populate("user", "nik nama")
-    .sort({ createddAt: -1 });
+router.get("/", PembayaranController.getAll);
+router.put("/", PembayaranController.put);
 
-  res.send({ error: false, pembayarans });
-});
-
-router.put("/", async (req, res) => {
+router.get("/:telpon", async (req, res) => {
   try {
-    const { id, status } = req.body;
+    const telpon = req.params.telpon;
 
-    pembayaranModel.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true },
-      (err, doc) => {
-        if (err) return res.status(500).send({ message: err });
-        res.status(200).send({
-          error: false,
-          message: "Data pembayaran berhasil dikonfirmasi",
-          pembayaran: doc,
-        });
-      }
-    );
+    await PembayaranController.cekPembayaran(telpon);
   } catch (error) {
-    res
-      .status(500)
-      .send({ error: true, message: "Data pembayaran gagal dikonfirmasi" });
+    res.status(500).send({ error: true, message: error });
   }
 });
 

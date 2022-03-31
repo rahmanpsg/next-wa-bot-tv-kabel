@@ -15,6 +15,7 @@ export type Users = {
   nama: string;
   telpon: number;
   alamat: string;
+  aktif: boolean;
   createdAt: string;
 };
 
@@ -41,7 +42,7 @@ export type Pembayarans = {
   user: Users;
   foto: string;
   status: boolean;
-  bulan: Array<number>;
+  bulan: Array<string>;
   createdAt: string;
 };
 

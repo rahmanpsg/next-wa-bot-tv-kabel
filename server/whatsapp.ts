@@ -17,10 +17,9 @@ import {
 import { Response } from "express";
 import socketio from "socket.io";
 
-import { Model } from "mongoose";
-import { IUser } from "./models/user";
-
-const userModel: Model<IUser> = require("./models/user");
+import UserController from "./controller/user";
+import PengaduanController from "./controller/pengaduan";
+import PembayaranController from "./controller/pembayaran";
 
 const sessionId = "tv_kabel";
 const sessions = new Map();
@@ -231,7 +230,7 @@ async function checkPesan(
   const telpon = remoteJid.split("@")[0];
 
   // Periksa jika nomor telah terdaftar
-  const cekUser = await userModel.countDocuments({ telpon });
+  const cekUser = await UserController.cekUser(telpon);
 
   if (cekUser > 0) buttons.splice(0, 1);
   else buttons.splice(-2);
@@ -242,8 +241,6 @@ async function checkPesan(
     buttons: buttons,
   };
 
-  console.log(chatSession);
-
   if (chatSession.has(remoteJid)) {
     delete messageContent.footer;
     delete messageContent.buttons;
@@ -253,7 +250,7 @@ async function checkPesan(
         case "#daftar":
           {
             messageContent.text =
-              "Silahkan masukkan data anda sesuai dengan format berikut, \nnama#nik#alamat";
+              "Peraturan PRIMACR TV Kabel.\n 1. Biaya pemasangan baru sebesar 250rb rupiah.\n 2. Biaya iuran perbulan sebesar 25rb rupiah.\n 3. Apabila terjadi penunggakan pembayaran iuran akan dikenakan sanksi denda 5rb/bulan.\n 4. Apabila terjadi penunggakan selama 2 bulan berturut-turut maka diadakan pemutusan sementara tanpa pengembalian biasa penyambungan.\n\nSilahkan masukkan data anda sesuai dengan format berikut untuk melanjutkan pendaftaran, \nnama#nik#alamat";
           }
           break;
         case "#daftar_oke":
@@ -262,23 +259,92 @@ async function checkPesan(
               if (daftarSession.has(remoteJid)) {
                 const { nik, nama, alamat } = daftarSession.get(remoteJid)!;
 
-                const user = await userModel.create({
-                  nik,
-                  nama,
-                  alamat,
-                  telpon,
-                });
+                messageContent.text =
+                  "Terimakasih telah mendaftar. \nSilahkan tunggu konfirmasi dari admin";
 
-                user.save((err) => {
-                  if (err)
-                    throw "Terjadi masalah di server. Silahkan coba beberapa saat lagi.";
+                UserController.save(nik, nama, alamat, telpon);
 
-                  messageContent.text =
-                    "Terimakasih telah mendaftar. \nSilahkan tunggu konfirmasi dari admin";
-                });
+                chatSession.delete(remoteJid);
               }
             } catch (error) {
               console.log(error);
+              messageContent.text = error as string;
+            }
+          }
+          break;
+        case "#pengaduan":
+          {
+            messageContent.text = "Silahkan pilih jenis pengaduan";
+
+            messageContent.buttons = [
+              {
+                buttonId: "#pengaduan_kabel",
+                buttonText: { displayText: "Kabel Putus" },
+              },
+              {
+                buttonId: "#pengaduan_siaran_acak",
+                buttonText: { displayText: "Siaran Teracak" },
+              },
+              {
+                buttonId: "#pengaduan_siaran_rusak",
+                buttonText: { displayText: "Siaran Rusak" },
+              },
+              {
+                buttonId: "#pengaduan_lainnya",
+                buttonText: { displayText: "Lainnya" },
+              },
+            ];
+          }
+          break;
+        case "#pengaduan_kabel":
+        case "#pengaduan_siaran_acak":
+        case "#pengaduan_siaran_rusak":
+          {
+            messageContent.text =
+              "Terima kasih telah mengadukan pengaduan. Petugas akan segera menindaklanjuti pengaduan anda.";
+
+            PengaduanController.save(
+              telpon,
+              message.buttonsResponseMessage.selectedDisplayText!
+            );
+          }
+          break;
+        case "#pengaduan_lainnya":
+          messageContent.text = "Silahkan masukkan pengaduan anda";
+          break;
+        case "#pembayaran":
+          {
+            messageContent.text = "Silahkan pilih layanan berikut";
+            messageContent.buttons = [
+              {
+                buttonId: "#pembayaran_data",
+                buttonText: { displayText: "Data Pembayaran" },
+              },
+              {
+                buttonId: "#pembayaran_iuran",
+                buttonText: { displayText: "Pembayaran Iuran" },
+              },
+              {
+                buttonId: "#pembayaran_verifikasi",
+                buttonText: { displayText: "Verifikasi Pembayaran" },
+              },
+            ];
+          }
+          break;
+        case "#pembayaran_data":
+          {
+            try {
+              await PembayaranController.cekPembayaran(telpon);
+            } catch (error) {
+              messageContent.text = error as string;
+            }
+          }
+          break;
+        case "#pembayaran_iuran":
+          {
+            try {
+              await PembayaranController.cekPembayaran(telpon);
+            } catch (error) {
               messageContent.text = error as string;
             }
           }
@@ -336,6 +402,12 @@ async function checkPesan(
             }
           }
           break;
+        case "#pengaduan_lainnya":
+          messageContent.text =
+            "Terima kasih telah mengadukan pengaduan. Petugas akan segera menindaklanjuti pengaduan anda.";
+
+          PengaduanController.save(telpon, message.conversation);
+          break;
         default:
           messageContent.text = "Maaf, layanan tidak tersedia";
       }
@@ -345,6 +417,8 @@ async function checkPesan(
     remoteJid,
     message.buttonsResponseMessage?.selectedButtonId ?? message.conversation!
   );
+
+  console.log(chatSession);
 
   return messageContent;
 }

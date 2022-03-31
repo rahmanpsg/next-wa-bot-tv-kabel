@@ -15,6 +15,7 @@ import {
   editUser,
   deleteUser,
   resetUser,
+  setStatusUser,
 } from "@/store/user/action";
 
 import Alert from "@/components/Alert";
@@ -32,6 +33,7 @@ type PelangganProps = {
   userState: UserState;
   getUsers: () => void;
   addUser: (formData: FormData) => void;
+  setStatusUser: (status: boolean, id: string) => void;
   editUser: (formData: FormData, id: string) => void;
   deleteUser: (id: string) => void;
   resetUser: () => void;
@@ -47,6 +49,7 @@ const Pelanggan = (props: PelangganProps) => {
   const [loading, setLoading] = useState(false);
   const [idUserSelected, setIdUserSelected] = useState(undefined);
   const [aksi, setAksi] = useState("");
+  const [messageAksi, setMessageAksi] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const modalDetailRef = useRef<HTMLInputElement>(null);
@@ -65,12 +68,12 @@ const Pelanggan = (props: PelangganProps) => {
 
     if (props.userState.errors !== null) return;
 
-    if (aksi != "hapus" && modalFormRef.current?.checked) {
+    if (aksi == "") return;
+
+    if (modalFormRef.current?.checked) {
       modalFormRef.current?.click();
-    } else if (aksi == "hapus" && modalAksiRef.current?.checked) {
+    } else if (modalAksiRef.current?.checked) {
       modalAksiRef.current?.click();
-    } else {
-      return;
     }
 
     if (showMessage) return;
@@ -82,6 +85,20 @@ const Pelanggan = (props: PelangganProps) => {
       props.resetUser();
     }, 4000);
   }, [props.userState]);
+
+  useEffect(() => {
+    switch (aksi) {
+      case "hapus":
+        setMessageAksi("Data pelanggan akan di hapus?");
+        break;
+      case "aktif":
+        setMessageAksi("Data pelanggan akan di aktifkan?");
+        break;
+      case "nonaktif":
+        setMessageAksi("Data pelanggan akan di nonaktifkan?");
+        break;
+    }
+  }, [aksi]);
 
   const submitForm = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -100,6 +117,12 @@ const Pelanggan = (props: PelangganProps) => {
         case "hapus":
           props.deleteUser(idUserSelected!);
           break;
+        case "aktif":
+          props.setStatusUser(true, idUserSelected!);
+          break;
+        case "nonaktif":
+          props.setStatusUser(false, idUserSelected!);
+          break;
       }
     } catch (error) {
       console.log(error);
@@ -117,8 +140,9 @@ const Pelanggan = (props: PelangganProps) => {
     }
   };
 
-  const detailClick = (row: Irow) => {
+  const statusClick = (row: Irow, aktif: boolean) => {
     setIdUserSelected(row._id);
+    setAksi(aktif ? "aktif" : "nonaktif");
   };
 
   const editClick = (row: Irow) => {
@@ -169,13 +193,17 @@ const Pelanggan = (props: PelangganProps) => {
       text: "Tanggal Daftar",
     },
     {
+      name: "aktif",
+      text: "Status",
+    },
+    {
       name: "aksi",
       text: "Aksi",
     },
   ];
 
   return (
-    <div className="container">
+    <div className="container outline outline-1 outline-gray-300 rounded p-2">
       <div className="flex md:flex-row flex-col gap-2 justify-between">
         <label
           htmlFor="my-modal-form"
@@ -206,7 +234,7 @@ const Pelanggan = (props: PelangganProps) => {
       <TableCustom
         headers={headers}
         data={props.userState.users}
-        detailClick={detailClick}
+        statusClick={statusClick}
         editClick={editClick}
         hapusClick={hapusClick}
       />
@@ -226,7 +254,7 @@ const Pelanggan = (props: PelangganProps) => {
       <ModalAksi
         modalRef={modalAksiRef}
         icon={<TiWarning size={50} className="text-warning" />}
-        message="Data pelanggan akan dihapus?"
+        message={messageAksi}
         loading={loading}
         submit={submitForm}
       />
@@ -241,6 +269,7 @@ const mapStateToProps = (state: State) => ({
 const mapActionsToProps = {
   getUsers,
   addUser,
+  setStatusUser,
   editUser,
   deleteUser,
   resetUser,

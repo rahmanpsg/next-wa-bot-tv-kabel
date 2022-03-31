@@ -7,7 +7,9 @@ export interface IUser extends Document {
   nama: string;
   telpon: string;
   alamat: string;
+  aktif: boolean;
   role?: string;
+  createdAt: string;
 }
 
 const schema: Schema = new Schema<IUser>(
@@ -28,6 +30,7 @@ const schema: Schema = new Schema<IUser>(
       required: true,
     },
     alamat: String,
+    aktif: Boolean,
     role: {
       type: String,
       default: "pelanggan",

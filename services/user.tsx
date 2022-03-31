@@ -32,10 +32,20 @@ class UserService {
 
   async put(formData: FormData, id: string) {
     try {
-      let data: any = { id };
+      let data: any = {};
       formData.forEach((value, key) => (data[key] = value));
 
-      const res = await axios.put(this.END_POINT, data);
+      const res = await axios.put(this.END_POINT + id, data);
+
+      return res.data;
+    } catch (error: any) {
+      throw error.response.data;
+    }
+  }
+
+  async putStatus(status: boolean, id: string) {
+    try {
+      const res = await axios.put(this.END_POINT + "status/" + id, { status });
 
       return res.data;
     } catch (error: any) {

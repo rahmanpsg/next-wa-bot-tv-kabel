@@ -43,6 +43,16 @@ export const deleteUser = (id: string) => async (dispatch: any) => {
   }
 };
 
+export const setStatusUser =
+  (status: boolean, id: string) => async (dispatch: any) => {
+    try {
+      const res = await UserService.putStatus(status, id);
+      return dispatch({ type: userActionTypes.UPDATE, payload: res });
+    } catch (error: any) {
+      return dispatch({ type: userActionTypes.ERROR, payload: error });
+    }
+  };
+
 export const resetUser = () => (dispatch: any) => {
   return dispatch({ type: userActionTypes.RESET });
 };

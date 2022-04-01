@@ -1,4 +1,4 @@
-import { UserState } from "types";
+import { RekeningState, UserState } from "types";
 
 import { TiWarning, TiTick, TiTimes, TiArrowRight } from "react-icons/ti";
 import { HeadersType } from "pages/admin/pelanggan";
@@ -7,7 +7,7 @@ import { FormEvent } from "react";
 type ModalFormProps = {
   modalRef: React.RefObject<HTMLInputElement>;
   formRef: React.RefObject<HTMLFormElement>;
-  state: UserState;
+  state: UserState | RekeningState;
   headers: HeadersType[];
   aksi: string;
   loading: boolean;
@@ -31,7 +31,10 @@ const ModalForm = (props: ModalFormProps) => {
         <div className="modal-box ">
           <h3 className="font-bold text-lg">
             {props.aksi == "tambah" ? "Tambah " : "Ubah "}
-            Data Pelanggan
+            Data{" "}
+            {(props.state as UserState).users !== undefined
+              ? "Pelanggan"
+              : "Pembayaran"}
           </h3>
           {props.loading != true && props.state.error && (
             <div className="alert alert-warning shadow-lg">

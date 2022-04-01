@@ -18,7 +18,8 @@ class PembayaranController {
 
   async put(req: Request, res: Response) {
     try {
-      const { id, status } = req.body;
+      const id = req.params.id;
+      const { status } = req.body;
 
       pembayaranModel.findByIdAndUpdate(
         id,
@@ -44,8 +45,6 @@ class PembayaranController {
     const user = await userModel.findOne({ telpon });
     const pembayarans = await pembayaranModel.find({ user: user!._id });
 
-    // if (pembayarans.length == 0) throw "Anda belum memiliki data pembayaran";
-
     const tanggalDaftar = new Date(user!.createdAt);
     const tanggalDaftarString = tanggalDaftar.toLocaleString("id-ID", {
       month: "long",
@@ -67,7 +66,7 @@ class PembayaranController {
     }
 
     if (arrBulan.length > 0)
-      throw "Anda belum membayaran iuran pada bulan " + arrBulan.join(", ");
+      throw "Anda belum membayar iuran pada bulan " + arrBulan.join(", ");
     else throw "Anda tidak memiliki tunggakan pembayaran";
   }
 

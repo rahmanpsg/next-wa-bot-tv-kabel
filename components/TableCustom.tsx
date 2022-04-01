@@ -13,11 +13,11 @@ import {
   TiThList,
 } from "react-icons/ti";
 import { HeadersType } from "pages/admin/pelanggan";
-import { Pembayarans, Pengaduans, Users } from "types";
+import { Pembayarans, Pengaduans, Rekenings, Users } from "types";
 
 type TableCustomProps = {
   headers: HeadersType[];
-  data: Array<Users | Pengaduans | Pembayarans>;
+  data: Array<Users | Pengaduans | Pembayarans | Rekenings>;
   statusClick?: (row: Irow, aktif: boolean) => void;
   editClick?: (row: Irow) => void;
   hapusClick?: (row: Irow) => void;
@@ -153,43 +153,33 @@ const TableCustom = (props: TableCustomProps) => {
           </ul>
         </div>
       );
-      // return (
-      //   <div className="flex gap-2">
-      //     {/* <div className="tooltip" data-tip="Lihat Data Pelanggan">
-      //       <label
-      //         onClick={() => {
-      //           props.detailClick!(row);
-      //         }}
-      //         htmlFor="my-modal-detail"
-      //         className="btn btn-sm btn-outline btn-primary text-white"
-      //       >
-      //         <TiDocumentText size={18} />
-      //       </label>
-      //     </div> */}
-      //     <div className="tooltip" data-tip="Ubah Data Pelanggan">
-      //       <label
-      //         onClick={() => {
-      //           props.editClick!(row);
-      //         }}
-      //         htmlFor="my-modal-form"
-      //         className="btn btn-sm btn-outline btn-warning text-white"
-      //       >
-      //         <TiEdit size={18} />
-      //       </label>
-      //     </div>
-      //     <div className="tooltip" data-tip="Hapus Data Pelanggan">
-      //       <label
-      //         onClick={() => {
-      //           props.hapusClick!(row);
-      //         }}
-      //         htmlFor="my-modal-aksi"
-      //         className="btn btn-sm btn-outline btn-error text-white"
-      //       >
-      //         <TiMinusOutline size={18} />
-      //       </label>
-      //     </div>
-      //   </div>
-      // );
+    } else if (column.field == "aksi2") {
+      return (
+        <div className="flex gap-2">
+          <div className="tooltip" data-tip="Ubah Rekening">
+            <label
+              onClick={() => {
+                props.editClick!(row);
+              }}
+              htmlFor="my-modal-form"
+              className="btn btn-sm btn-outline btn-warning text-white"
+            >
+              <TiEdit size={18} />
+            </label>
+          </div>
+          <div className="tooltip" data-tip="Hapus Rekening">
+            <label
+              onClick={() => {
+                props.hapusClick!(row);
+              }}
+              htmlFor="my-modal-aksi"
+              className="btn btn-sm btn-outline btn-error text-white"
+            >
+              <TiTrash size={18} />
+            </label>
+          </div>
+        </div>
+      );
     }
 
     return display_value;

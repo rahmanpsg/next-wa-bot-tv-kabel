@@ -52,10 +52,24 @@ export type PembayaranState = {
   error: boolean;
 };
 
+export type Rekenings = {
+  _id: string;
+  nama: string;
+  nomor: number;
+};
+
+export type RekeningState = {
+  rekenings: Array<Rekenings>;
+  message: string | null;
+  error: boolean;
+  errors: Map<string, string> | null;
+};
+
 export interface State {
   authState: AuthState;
   waState: WaState;
   userState: UserState;
   pengaduanState: PengaduanState;
   pembayaranState: PembayaranState;
+  rekeningState: RekeningState;
 }

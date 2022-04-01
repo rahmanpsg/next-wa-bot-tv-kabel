@@ -29,7 +29,7 @@ class PembayaranService {
 
   async put(id: string, status: boolean) {
     try {
-      const res = await axios.put(this.END_POINT, { id, status });
+      const res = await axios.put(this.END_POINT + id, { status });
 
       return res.data;
     } catch (error: any) {

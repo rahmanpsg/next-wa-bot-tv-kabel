@@ -14,6 +14,7 @@ import waState from "./wa/reduces";
 import userState from "./user/reduces";
 import pengaduanState from "./pengaduan/reduces";
 import pembayaranState from "./pembayaran/reduces";
+import rekeningState from "./rekening/reduces";
 
 import { State } from "types";
 
@@ -31,6 +32,7 @@ const combineReducer = combineReducers({
   userState,
   pengaduanState,
   pembayaranState,
+  rekeningState,
 });
 
 const reducer: Reducer<State, AnyAction> = (state, action) => {

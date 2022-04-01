@@ -4,6 +4,7 @@ import React, {
   useRef,
   ReactElement,
   HTMLInputTypeAttribute,
+  FormEvent,
 } from "react";
 import { connect } from "react-redux";
 import Layout from "@/components/Layout";
@@ -15,13 +16,22 @@ import {
   tolakPembayaran,
 } from "@/store/pembayaran/action";
 
+import {
+  deleteRekening,
+  addRekening,
+  editRekening,
+  getAllRekening,
+  resetRekening,
+} from "@/store/rekening/action";
+
 import TableCustom from "@/components/TableCustom";
 
-import { State, PembayaranState } from "@/types";
+import { State, PembayaranState, RekeningState } from "@/types";
 import { Irow } from "react-tailwind-table";
 import ModalAksi from "@/components/ModalAksi";
 import { TiPlus, TiWarning } from "react-icons/ti";
 import Alert from "@/components/Alert";
+import ModalForm from "@/components/ModalForm";
 
 type PembayaranProps = {
   pembayaranState: PembayaranState;
@@ -29,6 +39,12 @@ type PembayaranProps = {
   terimaPembayaran: (id: string) => void;
   tolakPembayaran: (id: string) => void;
   resetPembayaran: () => void;
+  rekeningState: RekeningState;
+  getAllRekening: () => void;
+  addRekening: (formData: FormData) => void;
+  editRekening: (formData: FormData, id: string) => void;
+  deleteRekening: (id: string) => void;
+  resetRekening: () => void;
 };
 
 export type HeadersType = {
@@ -40,14 +56,18 @@ export type HeadersType = {
 const Pembayaran = (props: PembayaranProps) => {
   const [loading, setLoading] = useState(false);
   const [tabActive, setTabActive] = useState(0);
-  const modalAksiRef = useRef<HTMLInputElement>(null);
   const [idPembayaranSelected, setIdPembayaranSelected] = useState(null);
+  const [idRekeningSelected, setIdRekeningSelected] = useState(undefined);
   const [aksi, setAksi] = useState("");
   const [showMessage, setShowMessage] = useState(false);
+  const modalAksiRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const modalFormRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!props.pembayaranState.pembayarans.length) setLoading(true);
     props.getAllPembayaran();
+    props.getAllRekening();
   }, []);
 
   useEffect(() => {
@@ -70,21 +90,30 @@ const Pembayaran = (props: PembayaranProps) => {
     }, 4000);
   }, [props.pembayaranState.error, props.pembayaranState.message]);
 
-  const submitAksi = async () => {
-    try {
-      setLoading(true);
-      switch (aksi) {
-        case "terima":
-          props.terimaPembayaran(idPembayaranSelected!);
-          break;
-        case "tolak":
-          props.tolakPembayaran(idPembayaranSelected!);
-          break;
-      }
-    } catch (error) {
-      console.log(error);
+  useEffect(() => {
+    if (loading) {
+      setLoading(false);
     }
-  };
+
+    if (props.rekeningState.errors !== null) return;
+
+    if (aksi == "") return;
+
+    if (modalFormRef.current?.checked) {
+      modalFormRef.current?.click();
+    } else if (modalAksiRef.current?.checked) {
+      modalAksiRef.current?.click();
+    }
+
+    if (showMessage) return;
+
+    setShowMessage(true);
+
+    setTimeout(() => {
+      setShowMessage(false);
+      props.resetRekening();
+    }, 4000);
+  }, [props.rekeningState]);
 
   const terimaClick = (row: Irow) => {
     setIdPembayaranSelected(row._id);
@@ -96,7 +125,59 @@ const Pembayaran = (props: PembayaranProps) => {
     setAksi("tolak");
   };
 
-  const tambahClick = () => {};
+  const tambahClick = () => {
+    formRef.current!.reset();
+    setAksi("tambah");
+  };
+
+  const editClick = (row: Irow) => {
+    if (props.rekeningState.error) props.resetRekening();
+    formRef.current!.reset();
+    setAksi("edit");
+
+    setIdRekeningSelected(row._id);
+
+    for (let index = 0; index < formRef.current?.children.length!; index++) {
+      const input = formRef.current?.children.item(index)?.children.item(1);
+      input?.setAttribute("value", row[input.getAttribute("name")!]);
+    }
+  };
+
+  const hapusClick = (row: Irow) => {
+    setIdRekeningSelected(row._id);
+    setAksi("hapus");
+  };
+
+  const submitForm = (e?: FormEvent) => {
+    e!.preventDefault();
+
+    const data = new FormData(formRef.current!);
+
+    console.log(aksi);
+
+    try {
+      setLoading(true);
+      switch (aksi) {
+        case "terima":
+          props.terimaPembayaran(idPembayaranSelected!);
+          break;
+        case "tolak":
+          props.tolakPembayaran(idPembayaranSelected!);
+          break;
+        case "tambah":
+          props.addRekening(data);
+          break;
+        case "edit":
+          props.editRekening(data, idRekeningSelected!);
+          break;
+        case "hapus":
+          props.deleteRekening(idRekeningSelected!);
+          break;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const tabList: Array<String> = [
     "Belum di Konfirmasi",
@@ -146,11 +227,17 @@ const Pembayaran = (props: PembayaranProps) => {
     },
     {
       name: "nama",
-      text: "Nama",
+      text: "Nama Rekening",
+      type: "text",
     },
     {
       name: "nomor",
       text: "Nomor",
+      type: "number",
+    },
+    {
+      name: "aksi2",
+      text: "Aksi",
     },
   ];
 
@@ -181,8 +268,10 @@ const Pembayaran = (props: PembayaranProps) => {
 
           {showMessage && !loading && (
             <Alert
-              error={props.pembayaranState.error}
-              message={props.pembayaranState.message!}
+              error={props.pembayaranState.error || props.rekeningState.error}
+              message={
+                props.pembayaranState.message! || props.rekeningState.message!
+              }
               className="max-w-xs animate-backInOutRight alert-sm"
             />
           )}
@@ -216,20 +305,30 @@ const Pembayaran = (props: PembayaranProps) => {
             </label>
             <TableCustom
               headers={headers3}
-              data={props.pembayaranState.pembayarans.filter(
-                (pembayaran) => pembayaran.status != undefined
-              )}
+              data={props.rekeningState.rekenings}
+              editClick={editClick}
+              hapusClick={hapusClick}
             />
           </>
         )}
       </div>
+
+      <ModalForm
+        modalRef={modalFormRef}
+        formRef={formRef}
+        state={props.rekeningState}
+        headers={headers3}
+        aksi={aksi}
+        loading={loading}
+        submitForm={submitForm}
+      />
 
       <ModalAksi
         modalRef={modalAksiRef}
         icon={<TiWarning size={50} className="text-warning" />}
         message={`Data pembayaran akan di${aksi}?`}
         loading={loading}
-        submit={submitAksi}
+        submit={submitForm}
       />
     </div>
   );
@@ -237,6 +336,7 @@ const Pembayaran = (props: PembayaranProps) => {
 
 const mapStateToProps = (state: State) => ({
   pembayaranState: state.pembayaranState,
+  rekeningState: state.rekeningState,
 });
 
 const mapActionsToProps = {
@@ -244,6 +344,11 @@ const mapActionsToProps = {
   terimaPembayaran,
   tolakPembayaran,
   resetPembayaran,
+  getAllRekening,
+  addRekening,
+  editRekening,
+  deleteRekening,
+  resetRekening,
 };
 
 Pembayaran.getLayout = function getLayout(page: ReactElement) {

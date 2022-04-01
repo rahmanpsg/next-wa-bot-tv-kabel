@@ -59,8 +59,6 @@ export default function reducer(state = userInitialStat, action: any) {
         errors.set(key, action.payload.errors[key]);
       }
 
-      console.log(errors);
-
       return {
         users: state.users,
         error: action.payload.error,

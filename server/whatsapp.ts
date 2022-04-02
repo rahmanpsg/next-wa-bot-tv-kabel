@@ -11,16 +11,22 @@ import {
   delay,
   AnyMessageContent,
   proto,
+  downloadContentFromMessage,
+  DownloadableMessage,
   //   delay,
 } from "@adiwajshing/baileys";
 
 import { Response } from "express";
 import socketio from "socket.io";
+import cloudinary from "cloudinary";
+import streamifier from "streamifier";
 
 import UserController from "./controller/user";
 import PengaduanController from "./controller/pengaduan";
 import PembayaranController from "./controller/pembayaran";
 import RekeningController from "./controller/rekening";
+
+import { formatRupiah } from "./utils/stringFormat";
 
 const sessionId = "tv_kabel";
 const sessions = new Map();
@@ -31,6 +37,7 @@ const daftarSession = new Map<
   string,
   { nik: number; nama: string; alamat: string }
 >();
+const pembayaranSession = new Map<string, number>();
 
 const init = () => {
   readdir(join(__dirname, "sessions"), (err, files) => {
@@ -109,10 +116,7 @@ const createSession = async (
       await wa!.chatRead(msg.key, 1);
 
       // fungsi untuk membalas pesan
-      const messageContent: AnyMessageContent = await checkPesan(
-        msg.message!,
-        msg.key.remoteJid!
-      );
+      const messageContent: AnyMessageContent = await checkPesan(msg);
 
       await sendMessageWTyping(wa, messageContent, msg.key.remoteJid!);
     }
@@ -207,9 +211,16 @@ const deleteSession = () => {
 
 // Logic pesan chat bot
 async function checkPesan(
-  message: proto.IMessage,
-  remoteJid: string
+  msg: proto.IWebMessageInfo
 ): Promise<AnyMessageContent> {
+  const message = msg.message!;
+  const remoteJid = msg.key.remoteJid!;
+
+  const telpon = remoteJid.split("@")[0];
+
+  // Periksa jika nomor telah terdaftar
+  const cekUser = await UserController.cekUser(telpon);
+
   const buttons = [
     {
       buttonId: "#daftar",
@@ -228,11 +239,6 @@ async function checkPesan(
     },
   ];
 
-  const telpon = remoteJid.split("@")[0];
-
-  // Periksa jika nomor telah terdaftar
-  const cekUser = await UserController.cekUser(telpon);
-
   if (cekUser > 0) buttons.splice(0, 1);
   else buttons.splice(-2);
 
@@ -243,12 +249,22 @@ async function checkPesan(
   };
 
   if (chatSession.has(remoteJid)) {
-    delete messageContent.footer;
-    delete messageContent.buttons;
+    const messageType = Object.keys(message)[0];
+
+    console.log(messageType);
 
     // fungsi jika pesan dari tombol
-    if (message.buttonsResponseMessage != null) {
-      const buttonId = message.buttonsResponseMessage.selectedButtonId;
+    if (messageType == "buttonsResponseMessage") {
+      chatSession.set(
+        remoteJid,
+        message.buttonsResponseMessage?.selectedButtonId ??
+          message.conversation!
+      );
+
+      delete messageContent.footer;
+      delete messageContent.buttons;
+
+      const buttonId = message.buttonsResponseMessage!.selectedButtonId;
       if (buttonId == "#daftar") {
         messageContent.text =
           "Peraturan PRIMACR TV Kabel.\n 1. Biaya pemasangan baru sebesar 250rb rupiah.\n 2. Biaya iuran perbulan sebesar 25rb rupiah.\n 3. Apabila terjadi penunggakan pembayaran iuran akan dikenakan sanksi denda 5rb/bulan.\n 4. Apabila terjadi penunggakan selama 2 bulan berturut-turut maka diadakan pemutusan sementara tanpa pengembalian biasa penyambungan.\n\nSilahkan masukkan data anda sesuai dengan format berikut untuk melanjutkan pendaftara";
@@ -300,7 +316,7 @@ async function checkPesan(
 
         PengaduanController.save(
           telpon,
-          message.buttonsResponseMessage.selectedDisplayText!
+          message.buttonsResponseMessage!.selectedDisplayText!
         );
       } else if (buttonId == "#pengaduan_lainnya")
         messageContent.text = "Silahkan masukkan pengaduan anda";
@@ -327,6 +343,20 @@ async function checkPesan(
           messageContent.text = error as string;
         }
       } else if (buttonId == "#pembayaran_iuran") {
+        messageContent.text = "Silahkan pilih total bulan yang ingin dibayar";
+        const listBulan = [1, 3, 6, 12];
+        messageContent.buttons = listBulan.map((bulan) => {
+          return {
+            buttonId: `#pembayaran_iuran_${bulan}`,
+            buttonText: { displayText: `${bulan} Bulan` },
+          };
+        });
+      } else if (buttonId?.match(/#pembayaran_iuran_\d/)) {
+        // menyimpan data pembayaran ke session
+        const bulan = parseInt(buttonId.replace("#pembayaran_iuran_", ""));
+
+        pembayaranSession.set(remoteJid, bulan);
+
         messageContent.text = "Silahkan pilih metode pembayaran";
         messageContent.buttons = [
           {
@@ -336,10 +366,6 @@ async function checkPesan(
           {
             buttonId: "#pembayaran_iuran_transfer",
             buttonText: { displayText: "Transfer" },
-          },
-          {
-            buttonId: "#pembayaran_iuran",
-            buttonText: { displayText: "Verifikasi Pembayaran" },
           },
         ];
       } else if (buttonId == "#pembayaran_iuran_transfer") {
@@ -357,22 +383,100 @@ async function checkPesan(
           messageContent.text = error as string;
         }
       } else if (buttonId!.match(/#pembayaran_iuran_transfer_/)) {
-        const id = buttonId?.split("_")[3];
+        try {
+          const id = buttonId!.replace("#pembayaran_iuran_transfer_", "");
+          const rekening = await RekeningController.get(id);
 
-        const rekening = await RekeningController.get(id!);
+          const totalBulan = pembayaranSession.get(remoteJid);
 
-        messageContent.text = `Nomor Rekening : ${rekening!.nomor}`;
+          // periksa daftar iuran yang belum dibayar
+          const arrBulan = await PembayaranController.cekPembayaran(
+            telpon,
+            true
+          );
+
+          const pembayaran = await PembayaranController.getTotalPembayaran(
+            totalBulan!,
+            arrBulan
+          );
+
+          // simpan pembayaran
+          PembayaranController.savePembayaran(
+            telpon,
+            pembayaran.bulans,
+            pembayaran.total,
+            id
+          );
+
+          const strBulan =
+            pembayaran.bulans.length > 1
+              ? `${pembayaran.bulans[0]} - ${
+                  pembayaran.bulans[pembayaran.bulans.length - 1]
+                }`
+              : pembayaran.bulans[0];
+
+          messageContent.text = `Anda akan melakukan pembayaran untuk bulan ${strBulan}. \nSilahkan transfer ke nomor rekening ${
+            rekening!.nama
+          } : ${rekening!.nomor} dengan total pembayaran ${formatRupiah(
+            pembayaran.total
+          )}. \nSimpan bukti transfer anda untuk mengkonfirmasi pembayaran. \nTerima kasih.`;
+        } catch (error) {
+          messageContent.text = error as string;
+        }
+        chatSession.delete(remoteJid);
+      } else if (buttonId == "#pembayaran_iuran_tunai") {
+        try {
+          const totalBulan = pembayaranSession.get(remoteJid);
+
+          // periksa daftar iuran yang belum dibayar
+          const arrBulan = await PembayaranController.cekPembayaran(
+            telpon,
+            true
+          );
+
+          const pembayaran = await PembayaranController.getTotalPembayaran(
+            totalBulan!,
+            arrBulan
+          );
+
+          // simpan pembayaran
+          PembayaranController.savePembayaran(
+            telpon,
+            pembayaran.bulans,
+            pembayaran.total
+          );
+
+          messageContent.text = `Silahkan membayar ${formatRupiah(
+            pembayaran.total
+          )} kepada petugas dan upload bukti pembayaran untuk diverifikasi. \nTerima kasih.`;
+        } catch (error) {
+          messageContent.text = error as string;
+        }
+        chatSession.delete(remoteJid);
+      } else if (buttonId == "#pembayaran_verifikasi") {
+        messageContent.text = "Silahkan upload bukti pembayaran anda";
+        chatSession.set(remoteJid, "#pembayaran_verifikasi");
       } else {
         messageContent.text = "Maaf, layanan tidak tersedia";
+        chatSession.delete(remoteJid);
       }
     }
     // fungsi jika pesan di ketik
-    else if (message.conversation != null)
+    else if (messageType == "conversation") {
+      chatSession.set(
+        remoteJid,
+        message.buttonsResponseMessage?.selectedButtonId ??
+          message.conversation!
+      );
+
+      delete messageContent.footer;
+      delete messageContent.buttons;
+
       switch (chatSession.get(remoteJid)) {
         case "#daftar":
           {
             try {
-              const data = message.conversation.split("#");
+              const data = message.conversation!.split("#");
               const [nama, nik, alamat] = data;
 
               // Validasi data
@@ -420,19 +524,80 @@ async function checkPesan(
           messageContent.text =
             "Terima kasih telah mengadukan pengaduan. Petugas akan segera menindaklanjuti pengaduan anda.";
 
-          PengaduanController.save(telpon, message.conversation);
+          PengaduanController.save(telpon, message.conversation!);
+
+          chatSession.delete(remoteJid);
           break;
         default:
           messageContent.text = "Maaf, layanan tidak tersedia";
+          chatSession.delete(remoteJid);
       }
+    } else if (messageType === "imageMessage") {
+      console.log(chatSession.get(remoteJid));
+
+      if (chatSession.get(remoteJid) == "#pembayaran_verifikasi") {
+        try {
+          const pembayaran = await PembayaranController.geyByTelpon(telpon);
+
+          const { mediaKey, directPath, url } = msg.message!.imageMessage!;
+
+          const downloadableMessage: DownloadableMessage = {
+            mediaKey: mediaKey!,
+            directPath: directPath!,
+            url: url!,
+          };
+          const stream = await downloadContentFromMessage(
+            downloadableMessage,
+            "image"
+          );
+          let buffer = Buffer.from([]);
+          for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+          }
+          // simpan ke cloudinary
+          const uploadFromBufer = async () => {
+            return new Promise((resolve, reject) => {
+              const cld_upload_stream = cloudinary.v2.uploader.upload_stream(
+                {
+                  public_id: `pembayaran/${pembayaran._id}}`,
+                },
+                (error, result: any) => {
+                  if (error) {
+                    reject(
+                      "Terjadi masalah saat mengupload bukti pembayaran. Silahkan coba beberapa saat lagi"
+                    );
+                  } else {
+                    resolve(
+                      "Bukti pembayaran berhasil diupload.\nTerima kasih."
+                    );
+
+                    PembayaranController.saveBuktiPembayaran(
+                      pembayaran.id,
+                      result!.url!
+                    );
+                  }
+                }
+              );
+
+              streamifier.createReadStream(buffer).pipe(cld_upload_stream);
+            });
+          };
+          const res = await uploadFromBufer();
+          messageContent.text = res as string;
+        } catch (error) {
+          messageContent.text = error as string;
+        }
+
+        delete messageContent.footer;
+        delete messageContent.buttons;
+      }
+    }
+  } else {
+    chatSession.set(
+      remoteJid,
+      message.buttonsResponseMessage?.selectedButtonId ?? message.conversation!
+    );
   }
-
-  chatSession.set(
-    remoteJid,
-    message.buttonsResponseMessage?.selectedButtonId ?? message.conversation!
-  );
-
-  console.log(chatSession);
 
   return messageContent;
 }

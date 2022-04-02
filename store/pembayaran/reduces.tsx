@@ -20,10 +20,10 @@ export default function reducer(state = pembayaranInitialStat, action: any) {
         (pembayaran) => pembayaran._id == action.payload.pembayaran._id
       );
 
-      Object.assign(
-        state.pembayarans[pembayaranIndex],
-        action.payload.pembayaran
-      );
+      Object.assign(state.pembayarans[pembayaranIndex], {
+        ...action.payload.pembayaran,
+        ...state.pembayarans[pembayaranIndex],
+      });
 
       return {
         pembayarans: state.pembayarans,

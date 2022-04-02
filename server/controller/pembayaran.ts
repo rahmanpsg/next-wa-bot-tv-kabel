@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { IPembayaran } from "../models/pembayaran";
 import { IUser } from "../models/user";
+import { generateMonthsAndYears } from "../utils/date";
+import { formatRupiah } from "../utils/stringFormat";
 
 const pembayaranModel: Model<IPembayaran> = require("../models/pembayaran");
 const userModel: Model<IUser> = require("../models/user");
@@ -9,11 +11,24 @@ const userModel: Model<IUser> = require("../models/user");
 class PembayaranController {
   async getAll(_: Request, res: Response) {
     const pembayarans = await pembayaranModel
-      .find()
+      .find({
+        foto: {
+          $exists: true,
+        },
+      })
       .populate("user", "nik nama")
+      .populate("rekening", "nama")
       .sort({ createdAt: -1 });
 
-    res.send({ error: false, pembayarans });
+    const result = pembayarans.map((pembayaran) => {
+      const total = formatRupiah(pembayaran.total);
+      const metode = pembayaran.rekening
+        ? `Transfer ${(pembayaran.rekening as any).nama}`
+        : "Tunai";
+      return { ...pembayaran.toJSON(), total, metode };
+    });
+
+    res.send({ error: false, pembayarans: result });
   }
 
   async put(req: Request, res: Response) {
@@ -41,17 +56,85 @@ class PembayaranController {
     }
   }
 
-  async cekPembayaran(telpon: string) {
+  // mengambil data pembayaran yang belum dikonfirmasi
+  async geyByTelpon(telpon: string) {
     const user = await userModel.findOne({ telpon });
-    const pembayarans = await pembayaranModel.find({ user: user!._id });
 
-    const tanggalDaftar = new Date(user!.createdAt);
-    const tanggalDaftarString = tanggalDaftar.toLocaleString("id-ID", {
-      month: "long",
-      year: "numeric",
+    // periksa jika ada data pembayaran yang belum dikonfirmasi
+    const pembayaran = await pembayaranModel
+      .findOne({
+        user: user!._id,
+        foto: {
+          $exists: false,
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    if (!pembayaran) {
+      throw "Anda belum memiliki data pembayaran";
+    } else {
+      return pembayaran;
+    }
+  }
+
+  async savePembayaran(
+    telpon: string,
+    bulan: Array<String>,
+    total: number,
+    idRekening?: string
+  ) {
+    const user = await userModel.findOne({ telpon });
+
+    // periksa jika ada data pembayaran yang belum dikonfirmasi
+    const pembayaran = await pembayaranModel
+      .findOne({
+        user: user!._id,
+        foto: {
+          $exists: false,
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    if (pembayaran) {
+      if (idRekening) pembayaran.rekening = new Types.ObjectId(idRekening);
+      pembayaran.bulan = bulan as Array<string>;
+      pembayaran.total = total;
+      await pembayaran.save();
+      return { pembayaran, bulan };
+    }
+    // buat data pembayaran baru
+    else {
+      const pembayaran = new pembayaranModel({
+        user: user!._id,
+        rekening: idRekening,
+        bulan,
+        total,
+      });
+
+      await pembayaran.save();
+      return { pembayaran, bulan };
+    }
+  }
+
+  async saveBuktiPembayaran(id: string, fotoUrl: string) {
+    const pembayaran = await pembayaranModel.findByIdAndUpdate(
+      id,
+      { foto: fotoUrl },
+      { new: true }
+    );
+    return pembayaran;
+  }
+
+  async cekPembayaran(telpon: string, get: boolean = false) {
+    const user = await userModel.findOne({ telpon });
+    const pembayarans = await pembayaranModel.find({
+      user: user!._id,
+      status: true,
     });
 
-    const arrBulan = this.generateMonthsAndYears(tanggalDaftarString);
+    const tanggalDaftar = new Date(user!.createdAt);
+
+    const arrBulan = generateMonthsAndYears(tanggalDaftar);
 
     if (arrBulan.length == 0) throw "Anda belum memiliki data pembayaran";
 
@@ -65,33 +148,55 @@ class PembayaranController {
       }
     }
 
-    if (arrBulan.length > 0)
-      throw "Anda belum membayar iuran pada bulan " + arrBulan.join(", ");
-    else throw "Anda tidak memiliki tunggakan pembayaran";
+    if (!get)
+      if (arrBulan.length > 0)
+        throw "Anda belum membayar iuran pada bulan " + arrBulan.join(", ");
+      else throw "Anda tidak memiliki tunggakan pembayaran";
+    else return arrBulan;
   }
 
-  private generateMonthsAndYears(startingFromDateString: string) {
-    const cur = new Date(`15 ${startingFromDateString}`);
-    const untilDateString = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth() + 1,
-      15
-    ).toDateString();
+  async getTotalPembayaran(totalBulan: number, arrBulan: Array<string>) {
+    if (arrBulan.length == 0) {
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + totalBulan);
 
-    const result = [];
+      const bulans = generateMonthsAndYears(startDate, endDate);
+      const total = totalBulan * 25000;
 
-    for (
-      ;
-      untilDateString !== cur.toDateString();
-      cur.setMonth(cur.getMonth() + 1)
-    )
-      result.push(
-        cur.toLocaleString("id-ID", { month: "numeric", year: "numeric" })
+      return {
+        bulans,
+        total,
+      };
+    } else {
+      const bulanAwal = arrBulan[0].split("/");
+
+      console.log(bulanAwal);
+
+      const startDate = new Date();
+      startDate.setFullYear(parseInt(bulanAwal[1]), parseInt(bulanAwal[0]) - 2);
+
+      const endDate = new Date();
+      endDate.setFullYear(
+        parseInt(bulanAwal[1]),
+        parseInt(bulanAwal[0]) - 1 + totalBulan
       );
 
-    result.splice(0, 1);
+      console.log(startDate);
+      console.log(endDate);
 
-    return result;
+      const bulans = generateMonthsAndYears(startDate, endDate);
+
+      console.log(bulans);
+
+      // total pembayaran + denda
+      const total = totalBulan * 25000 + arrBulan.length * 5000;
+
+      return {
+        bulans,
+        total,
+      };
+    }
   }
 }
 

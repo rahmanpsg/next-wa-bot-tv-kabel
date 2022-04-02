@@ -46,12 +46,16 @@ const TableCustom = (props: TableCustomProps) => {
   };
 
   const rowcheck = (row: Irow, column: Icolumn, display_value: any) => {
-    if (column.field === "createdAt") {
+    if (column.field === "createdAt" || column.field === "updatedAt") {
       return (
         <Moment format="llll" locale="id">
           {display_value.toString()}
         </Moment>
       );
+    } else if (column.field === "bulan") {
+      return display_value.length > 1
+        ? `${display_value[0]} - ${display_value[display_value.length - 1]}`
+        : display_value[0];
     } else if (column.field === "foto") {
       return (
         <a href={display_value.toString()} target="_blank">

@@ -10,7 +10,9 @@
     "@adiwajshing/baileys": "^4.0.1",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@types/socket.io": "^3.0.2",
+    "@types/streamifier": "^0.1.0",
     "axios": "^0.26.1",
+    "cloudinary": "^1.29.0",
     "cookie-parser": "^1.4.6",
     "cross-env": "^7.0.2",
     "daisyui": "^2.8.0",
@@ -33,7 +35,8 @@
     "redux": "^4.1.2",
     "redux-thunk": "^2.4.1",
     "socket-io": "^1.0.0",
-    "socket.io-client": "^4.4.1"
+    "socket.io-client": "^4.4.1",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.2",

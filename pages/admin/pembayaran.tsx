@@ -199,8 +199,20 @@ const Pembayaran = (props: PembayaranProps) => {
       text: "Nama",
     },
     {
-      name: "createdAt",
+      name: "updatedAt",
       text: "Tanggal Pembayaran",
+    },
+    {
+      name: "bulan",
+      text: "Bulan",
+    },
+    {
+      name: "total",
+      text: "Nominal",
+    },
+    {
+      name: "metode",
+      text: "Metode Pembayaran",
     },
     {
       name: "foto",
@@ -213,7 +225,7 @@ const Pembayaran = (props: PembayaranProps) => {
   ];
 
   const headers2: HeadersType[] = [
-    ...[...headers].splice(0, 5),
+    ...[...headers].splice(0, 7),
     {
       name: "status",
       text: "Status",

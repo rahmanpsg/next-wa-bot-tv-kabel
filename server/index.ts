@@ -12,6 +12,7 @@ const appNext = next({ dev, hostname, port });
 const handle: NextApiHandler = appNext.getRequestHandler();
 
 const database = require("./config/database");
+require("./config/cloudinary");
 
 appNext
   .prepare()

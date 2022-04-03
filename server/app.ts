@@ -8,6 +8,7 @@ import userRoutes from "./routes/user";
 import pengaduanRoutes from "./routes/pengaduan";
 import pembayaranRoutes from "./routes/pembayaran";
 import rekeningRoutes from "./routes/rekening";
+import totalRoutes from "./routes/total";
 
 const io: socketio.Server = new socketio.Server();
 
@@ -35,5 +36,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/pengaduan", pengaduanRoutes);
 app.use("/api/pembayaran", pembayaranRoutes);
 app.use("/api/rekening", rekeningRoutes);
+app.use("/api/total", totalRoutes);
 
 module.exports = { app, io };

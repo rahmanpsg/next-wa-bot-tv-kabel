@@ -16,8 +16,14 @@ import { waActionTypes } from "@/store/wa/action";
 import io from "socket.io-client";
 import QRCode from "react-qr-code";
 import { State, WaState } from "types";
+import { wrapper } from "@/store/store";
 
 type HomeProps = {
+  total: {
+    user: number;
+    newUser: number;
+    pengaduan: number;
+  };
   waState: WaState;
   runWaBot: () => void;
   stopWaBot: () => void;
@@ -85,7 +91,7 @@ const Home = (props: HomeProps) => {
               <TiGroup size={50} />
             </div>
             <div className="stat-title">Pelanggan</div>
-            <div className="stat-value">31K</div>
+            <div className="stat-value">{props.total.user}</div>
             <div className="stat-desc">Total</div>
           </div>
 
@@ -94,8 +100,8 @@ const Home = (props: HomeProps) => {
               <TiUserAdd size={50} />
             </div>
             <div className="stat-title">Pelanggan Baru</div>
-            <div className="stat-value">4</div>
-            <div className="stat-desc">↗︎ 400 (22%)</div>
+            <div className="stat-value">{props.total.newUser}</div>
+            <div className="stat-desc">Total</div>
           </div>
 
           <div className="stat">
@@ -103,8 +109,8 @@ const Home = (props: HomeProps) => {
               <TiDocumentText size={50} />
             </div>
             <div className="stat-title">Pengaduan</div>
-            <div className="stat-value">1,200</div>
-            <div className="stat-desc">↘︎ 90 (14%)</div>
+            <div className="stat-value">{props.total.pengaduan}</div>
+            <div className="stat-desc">Total</div>
           </div>
         </div>
       </div>
@@ -139,17 +145,21 @@ const Home = (props: HomeProps) => {
   );
 };
 
-// export const getServerSideProps = wrapper.getServerSideProps(
-//   // @ts-ignore
-//   (store) => async () => {
-//     const END_POINT = process.env.baseURL + "api/wa/";
-//     const res = await fetch(END_POINT);
+export const getStaticProps = wrapper.getStaticProps(
+  // @ts-ignore
+  (store) => async () => {
+    const END_POINT = process.env.baseURL + "api/total/";
+    const res = await fetch(END_POINT);
 
-//     const json = await res.json();
+    const json = await res.json();
 
-//     store.dispatch({ type: waActionTypes.UPDATE, payload: json });
-//   }
-// );
+    return {
+      props: {
+        total: json.total,
+      },
+    };
+  }
+);
 
 const mapStateToProps = (state: State) => ({
   waState: state.waState,

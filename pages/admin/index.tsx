@@ -145,7 +145,7 @@ const Home = (props: HomeProps) => {
   );
 };
 
-export const getStaticProps = wrapper.getStaticProps(
+export const getServerSideProps = wrapper.getServerSideProps(
   // @ts-ignore
   (store) => async () => {
     const END_POINT = process.env.baseURL + "api/total/";

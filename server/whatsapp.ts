@@ -267,7 +267,8 @@ async function checkPesan(
       const buttonId = message.buttonsResponseMessage!.selectedButtonId;
       if (buttonId == "#daftar") {
         messageContent.text =
-          "Peraturan PRIMACR TV Kabel.\n 1. Biaya pemasangan baru sebesar 250rb rupiah.\n 2. Biaya iuran perbulan sebesar 25rb rupiah.\n 3. Apabila terjadi penunggakan pembayaran iuran akan dikenakan sanksi denda 5rb/bulan.\n 4. Apabila terjadi penunggakan selama 2 bulan berturut-turut maka diadakan pemutusan sementara tanpa pengembalian biasa penyambungan.\n\nSilahkan masukkan data anda sesuai dengan format berikut untuk melanjutkan pendaftara";
+          "Peraturan PRIMACR TV Kabel.\n 1. Biaya pemasangan baru sebesar 250rb rupiah.\n 2. Biaya iuran perbulan sebesar 25rb rupiah.\n 3. Apabila terjadi penunggakan pembayaran iuran akan dikenakan sanksi denda 5rb/bulan.\n 4. Apabila terjadi penunggakan selama 2 bulan berturut-turut maka diadakan pemutusan sementara tanpa pengembalian biaya penyambungan.\n\nSilahkan masukkan data anda sesuai dengan format berikut untuk melanjutkan pendaftaran. \n\nNama Lengkap#NIK#Alamat Lengkap.\n\nContoh: \nImran#123456789#Jl. Lkr. Lapadde No.2";
+        chatSession.set(remoteJid, "#daftar");
       } else if (buttonId == "#daftar_oke") {
         try {
           if (daftarSession.has(remoteJid)) {
@@ -276,7 +277,7 @@ async function checkPesan(
             messageContent.text =
               "Terimakasih telah mendaftar. \nSilahkan tunggu konfirmasi dari admin";
 
-            UserController.save(nik, nama, alamat, telpon);
+            UserController.save(nik, nama, telpon, alamat);
 
             chatSession.delete(remoteJid);
           }
@@ -463,14 +464,16 @@ async function checkPesan(
     }
     // fungsi jika pesan di ketik
     else if (messageType == "conversation") {
-      chatSession.set(
-        remoteJid,
-        message.buttonsResponseMessage?.selectedButtonId ??
-          message.conversation!
-      );
+      // chatSession.set(
+      //   remoteJid,
+      //   message.buttonsResponseMessage?.selectedButtonId ??
+      //     message.conversation!
+      // );
 
       delete messageContent.footer;
       delete messageContent.buttons;
+
+      console.log(chatSession.get(remoteJid));
 
       switch (chatSession.get(remoteJid)) {
         case "#daftar":

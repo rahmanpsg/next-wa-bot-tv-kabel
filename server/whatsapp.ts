@@ -1,4 +1,4 @@
-import { existsSync, unlinkSync, readdir } from "fs";
+import { existsSync, mkdirSync, unlinkSync, readdir } from "fs";
 import { join } from "path";
 import { Boom } from "@hapi/boom";
 import {
@@ -40,6 +40,10 @@ const daftarSession = new Map<
 const pembayaranSession = new Map<string, number>();
 
 const init = () => {
+  if (!existsSync(__dirname + "/sessions")) {
+    mkdirSync(__dirname + "/sessions", { recursive: true });
+  }
+
   readdir(join(__dirname, "sessions"), (err, files) => {
     if (err) throw err;
 

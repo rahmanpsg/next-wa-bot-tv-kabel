@@ -35,8 +35,9 @@ appNext
     database.connect();
 
     // Listen on the default port (3000)
-    server.listen(port, hostname);
-    console.log(`Server berjalan di http://${hostname}:${port}`);
+    server.listen(port, () => {
+      console.log(`Server berjalan di http://${hostname}:${port}`);
+    });
   })
   .catch((error: any) => {
     console.error(error.stack);

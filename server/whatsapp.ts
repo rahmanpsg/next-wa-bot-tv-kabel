@@ -1,18 +1,18 @@
 import { existsSync, mkdirSync, unlinkSync, readdir } from "fs";
 import { join } from "path";
 import { Boom } from "@hapi/boom";
-import {
-  makeWALegacySocket,
-  useSingleFileLegacyAuthState,
+import makeWASocket, {
+  fetchLatestBaileysVersion,
+  useSingleFileAuthState,
   makeInMemoryStore,
   DisconnectReason,
-  LegacySocketConfig,
   Browsers,
   delay,
   AnyMessageContent,
   proto,
   downloadContentFromMessage,
   DownloadableMessage,
+  SocketConfig,
   //   delay,
 } from "@adiwajshing/baileys";
 
@@ -93,15 +93,18 @@ const createSession = async (
 ) => {
   const store = makeInMemoryStore({});
 
-  const { state, saveState } = useSingleFileLegacyAuthState(sessionsDir());
+  const { state, saveState } = useSingleFileAuthState(sessionsDir());
 
-  const waConfig: Partial<LegacySocketConfig> = {
+  const { version } = await fetchLatestBaileysVersion();
+
+  const waConfig: Partial<SocketConfig> = {
+    version,
     auth: state,
     printQRInTerminal: false,
     browser: Browsers.ubuntu("Chrome"),
   };
 
-  const wa = makeWALegacySocket(waConfig);
+  const wa = makeWASocket(waConfig);
 
   store.readFromFile(sessionsDir(true));
   store.bind(wa.ev);
@@ -117,7 +120,10 @@ const createSession = async (
     if (!msg.key.fromMe && m.type === "notify") {
       console.log(msg.message);
 
-      await wa!.chatRead(msg.key, 1);
+      // await wa!.chatRead(msg.key, 1);
+      await wa!.sendReadReceipt(msg.key.remoteJid!, msg.key.participant!, [
+        msg.key.id!,
+      ]);
 
       // fungsi untuk membalas pesan
       const messageContent: AnyMessageContent = await checkPesan(msg);
@@ -258,7 +264,7 @@ async function checkPesan(
     console.log(messageType);
 
     // fungsi jika pesan dari tombol
-    if (messageType == "buttonsResponseMessage") {
+    if (messageType == "messageContextInfo") {
       chatSession.set(
         remoteJid,
         message.buttonsResponseMessage?.selectedButtonId ??

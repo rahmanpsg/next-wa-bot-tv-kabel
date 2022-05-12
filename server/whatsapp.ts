@@ -317,10 +317,11 @@ async function checkPesan(
           },
         ];
       } else if (
-        buttonId ==
-        ("#pengaduan_kabel" ||
-          "#pengaduan_siaran_acak" ||
-          "#pengaduan_siaran_rusak")
+        [
+          "#pengaduan_kabel",
+          "#pengaduan_siaran_acak",
+          "#pengaduan_siaran_rusak",
+        ].includes(buttonId!)
       ) {
         messageContent.text =
           "Terima kasih telah mengadukan pengaduan. Petugas akan segera menindaklanjuti pengaduan anda.";
@@ -329,24 +330,33 @@ async function checkPesan(
           telpon,
           message.buttonsResponseMessage!.selectedDisplayText!
         );
+
+        chatSession.delete(remoteJid);
       } else if (buttonId == "#pengaduan_lainnya")
         messageContent.text = "Silahkan masukkan pengaduan anda";
       else if (buttonId == "#pembayaran") {
-        messageContent.text = "Silahkan pilih layanan berikut";
-        messageContent.buttons = [
-          {
-            buttonId: "#pembayaran_data",
-            buttonText: { displayText: "Data Pembayaran" },
-          },
-          {
-            buttonId: "#pembayaran_iuran",
-            buttonText: { displayText: "Pembayaran Iuran" },
-          },
-          {
-            buttonId: "#pembayaran_verifikasi",
-            buttonText: { displayText: "Verifikasi Pembayaran" },
-          },
-        ];
+        try {
+          // periksa daftar iuran yang belum dibayar
+          await PembayaranController.cekPembayaran(telpon, true);
+
+          messageContent.text = "Silahkan pilih layanan berikut";
+          messageContent.buttons = [
+            {
+              buttonId: "#pembayaran_data",
+              buttonText: { displayText: "Data Pembayaran" },
+            },
+            {
+              buttonId: "#pembayaran_iuran",
+              buttonText: { displayText: "Pembayaran Iuran" },
+            },
+            {
+              buttonId: "#pembayaran_verifikasi",
+              buttonText: { displayText: "Verifikasi Pembayaran" },
+            },
+          ];
+        } catch (error) {
+          messageContent.text = "Tidak ada pembayaran yang belum dibayar.";
+        }
       } else if (buttonId == "#pembayaran_data") {
         try {
           await PembayaranController.cekPembayaran(telpon);
@@ -588,6 +598,8 @@ async function checkPesan(
                       pembayaran.id,
                       result!.url!
                     );
+
+                    chatSession.delete(remoteJid);
                   }
                 }
               );

@@ -3,7 +3,7 @@ import { join } from "path";
 import { Boom } from "@hapi/boom";
 import makeWASocket, {
 	fetchLatestBaileysVersion,
-	useSingleFileAuthState,
+	useMultiFileAuthState,
 	makeInMemoryStore,
 	DisconnectReason,
 	Browsers,
@@ -12,7 +12,6 @@ import makeWASocket, {
 	proto,
 	downloadContentFromMessage,
 	DownloadableMessage,
-	SocketConfig,
 	//   delay,
 } from "@adiwajshing/baileys";
 
@@ -47,25 +46,17 @@ const init = () => {
 	readdir(join(__dirname, "sessions"), (err, files) => {
 		if (err) throw err;
 
-		for (const file of files) {
-			if (
-				!file.endsWith(".json") ||
-				!file.includes("_session") ||
-				file.includes("_store")
-			) {
-				continue;
-			}
-
+		if (files.length > 0) {
 			createSession();
 		}
 	});
 };
 
-const sessionsDir = (store = false) => {
+const sessionsDir = (fullPath = false) => {
 	return join(
 		__dirname,
 		"sessions",
-		sessionId + `${store ? "_store" : "_session"}.json`
+		fullPath ? `${sessionId}_session.json` : ""
 	);
 };
 
@@ -93,11 +84,13 @@ const createSession = async (
 ) => {
 	const store = makeInMemoryStore({});
 
-	const { state, saveState } = useSingleFileAuthState(sessionsDir());
+	const { state, saveCreds: saveState } = await useMultiFileAuthState(
+		sessionsDir()
+	);
 
 	const { version } = await fetchLatestBaileysVersion();
 
-	const waConfig: Partial<SocketConfig> = {
+	const waConfig = {
 		version,
 		auth: state,
 		printQRInTerminal: false,
@@ -233,17 +226,17 @@ async function checkPesan(
 
 	const buttons = [
 		{
-			buttonId: "#daftar",
+			buttonId: "daftar",
 			buttonText: { displayText: "Daftar Baru" },
 			type: 1,
 		},
 		{
-			buttonId: "#pengaduan",
+			buttonId: "pengaduan",
 			buttonText: { displayText: "Pengaduan" },
 			type: 1,
 		},
 		{
-			buttonId: "#pembayaran",
+			buttonId: "pembayaran",
 			buttonText: { displayText: "Pembayaran" },
 			type: 1,
 		},
@@ -633,7 +626,7 @@ const sendMessageWTyping = async (
 	jid: string
 ) => {
 	await wa.presenceSubscribe(jid);
-	await delay(500);
+	await delay(1000);
 
 	await wa.sendPresenceUpdate("composing", jid);
 	await delay(2000);
